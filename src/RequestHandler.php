@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use SubstancePHP\HTTP\Exception\EmptyMiddlewareStackException;
 
 /** Processes HTTP requests by passing them through a series of middlewares. */
 readonly class RequestHandler implements RequestHandlerInterface
@@ -36,7 +37,7 @@ readonly class RequestHandler implements RequestHandlerInterface
     {
         $newMiddlewareStack = $this->middlewareStack;
         if (\count($newMiddlewareStack) == 0) {
-            throw new \RuntimeException('Middleware stack unexpectedly empty');
+            throw new EmptyMiddlewareStackException('Middleware stack unexpectedly empty');
         }
         $outermostMiddleware = \array_pop($newMiddlewareStack);
         \assert($outermostMiddleware !== null);
@@ -52,7 +53,7 @@ readonly class RequestHandler implements RequestHandlerInterface
         return new class () implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                throw new \RuntimeException('Middleware stack empty');
+                throw new EmptyMiddlewareStackException('Middleware stack empty');
             }
         };
     }

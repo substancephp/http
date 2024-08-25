@@ -12,6 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use SubstancePHP\HTTP\Exception\EmptyMiddlewareStackException;
 use SubstancePHP\HTTP\RequestHandler;
 use SubstancePHP\HTTP\Status;
 
@@ -43,7 +44,7 @@ class RequestHandlerTest extends TestCase
     {
         $requestHandler = RequestHandler::from([]);
         $mockRequest = $this->createMock(ServerRequestInterface::class);
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(EmptyMiddlewareStackException::class);
         $requestHandler->handle($mockRequest);
     }
 
