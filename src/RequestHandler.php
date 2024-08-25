@@ -11,7 +11,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\EmptyMiddlewareStackException;
 
 /** Processes HTTP requests by passing them through a series of middlewares. */
-readonly class RequestHandler implements RequestHandlerInterface
+class RequestHandler implements RequestHandlerInterface
 {
     /**
      * @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER.
@@ -21,40 +21,22 @@ readonly class RequestHandler implements RequestHandlerInterface
         return new self(\array_reverse($middlewares));
     }
 
+    /**
+     * Processes the request using the middleware stack.
+     *
+     * @throws EmptyMiddlewareStackException if there is no middleware in the stack.
+     */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        [$outermostMiddleware, $nextHandler] = $this->pop();
-        return $outermostMiddleware->process($request, $nextHandler);
+        if (\count($this->middlewareStack) == 0) {
+            throw new EmptyMiddlewareStackException('Middleware stack empty');
+        }
+        $outermostMiddleware = \array_pop($this->middlewareStack);
+        return $outermostMiddleware->process($request, $this);
     }
 
     /** @param MiddlewareInterface[] $middlewareStack stack of middlewares, listed in order of INSIDE to OUT */
     private function __construct(private array $middlewareStack)
     {
-    }
-
-    /** @return array{MiddlewareInterface, RequestHandlerInterface} the top middleware, and the next handler */
-    private function pop(): array
-    {
-        $newMiddlewareStack = $this->middlewareStack;
-        if (\count($newMiddlewareStack) == 0) {
-            throw new EmptyMiddlewareStackException('Middleware stack unexpectedly empty');
-        }
-        $outermostMiddleware = \array_pop($newMiddlewareStack);
-        \assert($outermostMiddleware !== null);
-        $nextHandler = match (\count($newMiddlewareStack)) {
-            0 => $this->getFinalHandler(),
-            default => new self($newMiddlewareStack),
-        };
-        return [$outermostMiddleware, $nextHandler];
-    }
-
-    private function getFinalHandler(): RequestHandlerInterface
-    {
-        return new class () implements RequestHandlerInterface {
-            public function handle(ServerRequestInterface $request): ResponseInterface
-            {
-                throw new EmptyMiddlewareStackException('Middleware stack empty');
-            }
-        };
     }
 }
