@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bdace57113c76d8f071c6756fba9cc7a",
+    "content-hash": "655062b01a8b276783c96fe2307ec02e",
     "packages": [
         {
             "name": "psr/container",
@@ -224,6 +224,57 @@
                 "source": "https://github.com/php-fig/http-server-middleware/tree/1.0.2"
             },
             "time": "2023-04-11T06:14:47+00:00"
+        },
+        {
+            "name": "substancephp/container",
+            "version": "v0.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/substancephp/container.git",
+                "reference": "ab4b49272045a379a5d7a97e000efe204c5c17fe"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/substancephp/container/zipball/ab4b49272045a379a5d7a97e000efe204c5c17fe",
+                "reference": "ab4b49272045a379a5d7a97e000efe204c5c17fe",
+                "shasum": ""
+            },
+            "require": {
+                "ext-xdebug": "*",
+                "php": ">=8.3",
+                "psr/container": "^2.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.11",
+                "phpunit/phpunit": "^11.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SubstancePHP\\Container\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Matthew Harvey",
+                    "email": "software@matthewharvey.net"
+                }
+            ],
+            "description": "A PSR-11 IoC container for PHP",
+            "homepage": "https://github.com/substancephp/container",
+            "keywords": [
+                "PSR-11",
+                "dependency injection"
+            ],
+            "support": {
+                "issues": "https://github.com/substancephp/container/issues",
+                "source": "https://github.com/substancephp/container"
+            },
+            "time": "2024-07-13T23:43:01+00:00"
         }
     ],
     "packages-dev": [
