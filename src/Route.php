@@ -39,6 +39,8 @@ class Route
      *   are located.
      * @param string $method the HTTP method handled by this route
      * @param string $path the URL path
+     * @return ?self a new instance; or null if either: there is no file matching this route; or there is a file
+     *   but it does not return a callable.
      */
     public static function from(string $actionRoot, string $method, string $path): ?self
     {

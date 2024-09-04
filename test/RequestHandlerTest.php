@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Test;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use SubstancePHP\HTTP\Exception\EmptyMiddlewareStackException;
+use Psr\Http\Server\RequestHandlerInterface;
+use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
 use SubstancePHP\HTTP\RequestHandler;
-use SubstancePHP\HTTP\Status;
 
 #[CoversClass(RequestHandler::class)]
 #[CoversMethod(RequestHandler::class, 'from')]
