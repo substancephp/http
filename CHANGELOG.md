@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### v0.0.5
+
+* Add "SkippableMiddleware" class
+* Move exceptions thrown by this library under a common "BaseException" class
+
 ### v0.0.4
 
 * Add "Route" class
