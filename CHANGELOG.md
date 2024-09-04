@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### v0.0.4
+
+* Add "Route" class
+* Add "Skip" attribute for marking which middlewares to
+  skip on route handlers
+
 ### v0.0.3
 
 * Simplify request handler implementation
