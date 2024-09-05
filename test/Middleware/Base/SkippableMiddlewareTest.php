@@ -30,7 +30,7 @@ class SkippableMiddlewareTest extends TestCase
         $requestFactory = new ServerRequestFactory();
         $responseFactory = new ResponseFactory();
 
-        $makeRequestHandler = fn () => RequestHandler::from([
+        $requestHandler = RequestHandler::from([
             new ExampleNonSkippableMiddleware(),
             new ExampleSkippableMiddlewareA(),
             new ExampleSkippableMiddlewareB(),
@@ -43,7 +43,7 @@ class SkippableMiddlewareTest extends TestCase
             ->withAttribute(Route::class, $route);
 
         // test happy
-        $response = $makeRequestHandler()->handle($request);
+        $response = $requestHandler->handle($request);
         $requestAttributes = $response->getHeader('X-Request-Attributes');
         $this->assertCount(1, $requestAttributes);
         $expected = '{' .
@@ -58,6 +58,6 @@ class SkippableMiddlewareTest extends TestCase
         $request = $requestFactory->createServerRequest('GET', '/ignore')
             ->withAttribute(Route::class, null);
         $this->expectException(UnexpectedRequestAttributeValueException::class);
-        $makeRequestHandler()->handle($request);
+        $requestHandler->handle($request);
     }
 }

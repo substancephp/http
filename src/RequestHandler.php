@@ -9,20 +9,25 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
+use SubstancePHP\HTTP\Internal\MutableRequestHandler;
 
 /**
  * Processes HTTP requests by passing them through a series of middlewares.
  *
- * FIXME Make it readonly--otherwise it cannot be reused.
+ * TODO Consider abolishing SkippableMiddleware base class, and instead using
+ *   RequestHandler to arrange middleware skipping.
  */
-class RequestHandler implements RequestHandlerInterface
+readonly class RequestHandler implements RequestHandlerInterface
 {
-    /**
-     * @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER.
-     */
+    /** @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER. */
     public static function from(array $middlewares): self
     {
-        return new self(\array_reverse($middlewares));
+        return new self($middlewares);
+    }
+
+    /** @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER. */
+    private function __construct(private array $middlewares)
+    {
     }
 
     /**
@@ -32,15 +37,8 @@ class RequestHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (\count($this->middlewareStack) == 0) {
-            throw new EmptyMiddlewareStackException('Middleware stack empty');
-        }
-        $outermostMiddleware = \array_pop($this->middlewareStack);
-        return $outermostMiddleware->process($request, $this);
-    }
-
-    /** @param MiddlewareInterface[] $middlewareStack stack of middlewares, listed in order of INSIDE to OUT */
-    private function __construct(private array $middlewareStack)
-    {
+        $middlewareStack = \array_reverse($this->middlewares);
+        $handler = new MutableRequestHandler($middlewareStack);
+        return $handler->handle($request);
     }
 }
