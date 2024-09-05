@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.0.6
+
+* Make RequestHandler immutable
+
 ### v0.0.5
 
 * Add "SkippableMiddleware" class
