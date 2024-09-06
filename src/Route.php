@@ -67,21 +67,32 @@ class Route
      */
     public function shouldSkip(string $middleware): bool
     {
-        if ($this->skippableMiddlewares === null) {
-            $this->skippableMiddlewares = [];
-            $reflectionFunction = new \ReflectionFunction($this->callback);
-            $reflectionAttributes = $reflectionFunction->getAttributes();
-            foreach ($reflectionAttributes as $reflectionAttribute) {
-                if ($reflectionAttribute->getName() === Skip::class) {
-                    $attribute = $reflectionAttribute->newInstance();
-                    \assert($attribute instanceof Skip);
-                    foreach ($attribute->skippableMiddlewares as $skippableMiddleware) {
-                        $this->skippableMiddlewares[] = $skippableMiddleware;
-                    }
+        return \in_array(
+            $middleware,
+            $this->skippableMiddlewares ??= $this->computeSkippableMiddlewares(),
+            true,
+        );
+    }
+
+    /**
+     * @return array<string> fully-qualified class names of middlewares that should be skipped in handling this route
+     * @throws \ReflectionException
+     */
+    private function computeSkippableMiddlewares(): array
+    {
+        $skippableMiddlewares = [];
+        $reflectionFunction = new \ReflectionFunction($this->callback);
+        $reflectionAttributes = $reflectionFunction->getAttributes();
+        foreach ($reflectionAttributes as $reflectionAttribute) {
+            if ($reflectionAttribute->getName() === Skip::class) {
+                $attribute = $reflectionAttribute->newInstance();
+                \assert($attribute instanceof Skip);
+                foreach ($attribute->skippableMiddlewares as $skippableMiddleware) {
+                    $skippableMiddlewares[] = $skippableMiddleware;
                 }
             }
         }
-        return \in_array($middleware, $this->skippableMiddlewares, true);
+        return $skippableMiddlewares;
     }
 
     /**

@@ -6,18 +6,15 @@ namespace TestUtil\Fixture\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use SubstancePHP\HTTP\Middleware\Base\SkippableMiddleware;
 
-readonly class ExampleSkippableMiddlewareB extends SkippableMiddleware
+readonly class ExampleMiddlewareC implements MiddlewareInterface
 {
-    /**
-     * @inheritDoc
-     */
-    protected function doProcess(
+    public function process(
         ServerRequestInterface $request,
         RequestHandlerInterface $handler,
     ): ResponseInterface {
-        return $handler->handle($request->withAttribute('example skippable middleware B called', true));
+        return $handler->handle($request->withAttribute('middleware C called', true));
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Test;
 
+use Laminas\Diactoros\ResponseFactory;
+use Laminas\Diactoros\ServerRequestFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -13,11 +15,21 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
+use SubstancePHP\HTTP\Exception\BaseException\UnexpectedRequestAttributeValueException;
+use SubstancePHP\HTTP\Internal\MutableRequestHandler;
 use SubstancePHP\HTTP\RequestHandler;
+use SubstancePHP\HTTP\Route;
+use TestUtil\Fixture\Middleware\AttributeGatheringMiddleware;
+use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
+use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
+use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
 
 #[CoversClass(RequestHandler::class)]
 #[CoversMethod(RequestHandler::class, 'from')]
 #[CoversMethod(RequestHandler::class, 'handle')]
+#[CoversClass(MutableRequestHandler::class)]
+#[CoversMethod(MutableRequestHandler::class, '__construct')]
+#[CoversMethod(MutableRequestHandler::class, 'handle')]
 class RequestHandlerTest extends TestCase
 {
     #[Test]
@@ -143,5 +155,41 @@ class RequestHandlerTest extends TestCase
         };
 
         return [$middlewareA, $middlewareB, $middlewareC, $middlewareD, $middlewareE];
+    }
+
+    #[Test]
+    public function handleWithSkippedMiddlewares(): void
+    {
+        // setup
+        $requestFactory = new ServerRequestFactory();
+        $responseFactory = new ResponseFactory();
+
+        $requestHandler = RequestHandler::from([
+            new ExampleMiddlewareA(),
+            new ExampleMiddlewareB(),
+            new ExampleMiddlewareC(),
+            new AttributeGatheringMiddleware($responseFactory),
+        ]);
+        $actionRoot = \dirname(__DIR__) . '/testutil/Fixture/action';
+        $route = Route::from($actionRoot, 'GET', '/dummy');
+
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, $route);
+
+        // test happy
+        $response = $requestHandler->handle($request);
+        $requestAttributes = $response->getHeader('X-Request-Attributes');
+        $this->assertCount(1, $requestAttributes);
+        $expected = '{' .
+            '"SubstancePHP\\\\HTTP\\\\Route":{},' .
+            '"middleware B called":true,' .
+            '"attribute gathering middleware called":true' .
+            '}';
+        $this->assertSame($expected, $requestAttributes[0]);
+
+        // test unhappy - bad route
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, null);
+        $requestHandler->handle($request);
     }
 }

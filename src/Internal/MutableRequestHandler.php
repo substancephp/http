@@ -9,6 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
+use SubstancePHP\HTTP\Route;
 
 /** @internal */
 class MutableRequestHandler implements RequestHandlerInterface
@@ -21,10 +22,17 @@ class MutableRequestHandler implements RequestHandlerInterface
     /** @throws EmptyMiddlewareStackException if there is no middleware in the stack. */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (\count($this->middlewareStack) == 0) {
-            throw new EmptyMiddlewareStackException('Middleware stack empty');
+        $route = $request->getAttribute(Route::class);
+        if (!($route instanceof Route)) {
+            $route = null;
         }
-        $outermostMiddleware = \array_pop($this->middlewareStack);
-        return $outermostMiddleware->process($request, $this);
+        do {
+            if (\count($this->middlewareStack) == 0) {
+                throw new EmptyMiddlewareStackException('Middleware stack empty');
+            }
+            $middleware = \array_pop($this->middlewareStack);
+        } while ($route && $route->shouldSkip(\get_class($middleware)));
+
+        return $middleware->process($request, $this);
     }
 }

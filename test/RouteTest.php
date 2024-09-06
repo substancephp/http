@@ -11,9 +11,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\Out;
 use SubstancePHP\HTTP\Route;
-use TestUtil\Fixture\Middleware\ExampleNonSkippableMiddleware;
-use TestUtil\Fixture\Middleware\ExampleSkippableMiddlewareA;
-use TestUtil\Fixture\Middleware\ExampleSkippableMiddlewareB;
+use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
+use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
+use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
 
 #[CoversClass(Route::class)]
 #[CoversMethod(Route::class, 'from')]
@@ -55,9 +55,9 @@ class RouteTest extends TestCase
 
         // As far as this method is concerned, the only thing that matters is whether the
         // middleware class name has been passed to the constructor.
-        $this->assertTrue($route->shouldSkip(ExampleNonSkippableMiddleware::class));
-        $this->assertTrue($route->shouldSkip(ExampleSkippableMiddlewareA::class));
-        $this->assertFalse($route->shouldSkip(ExampleSkippableMiddlewareB::class));
+        $this->assertTrue($route->shouldSkip(ExampleMiddlewareC::class));
+        $this->assertTrue($route->shouldSkip(ExampleMiddlewareA::class));
+        $this->assertFalse($route->shouldSkip(ExampleMiddlewareB::class));
         $this->assertFalse($route->shouldSkip('bye'));
     }
 
