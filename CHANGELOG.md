@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### v0.0.7
+
+* Simplify middleware skipping mechanism
+  * Abolish SkippableMiddleware base class
+  * Any middleware is now skippable if annotated with Skip and handled via RequestHandler
+
 ### v0.0.6
 
 * Make RequestHandler immutable
