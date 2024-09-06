@@ -23,6 +23,7 @@ use TestUtil\Fixture\Middleware\AttributeGatheringMiddleware;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
+use TestUtil\TestUtil;
 
 #[CoversClass(RequestHandler::class)]
 #[CoversMethod(RequestHandler::class, 'from')]
@@ -170,8 +171,7 @@ class RequestHandlerTest extends TestCase
             new ExampleMiddlewareC(),
             new AttributeGatheringMiddleware($responseFactory),
         ]);
-        $actionRoot = \dirname(__DIR__) . '/testutil/Fixture/action';
-        $route = Route::from($actionRoot, 'GET', '/dummy');
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy');
 
         $request = $requestFactory->createServerRequest('GET', '/ignore')
             ->withAttribute(Route::class, $route);

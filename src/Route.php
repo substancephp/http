@@ -20,6 +20,8 @@ use Psr\Container\NotFoundExceptionInterface;
  * Later, when handling `$route`, it would be expected that a file will reside at
  * `/path/to/project/actions/assets/vehicles.patch.php`, with that file returning an appropriate
  * callback for handling the request.
+ *
+ * It is expected that the returned callback will return an {@see Out} instance.
  */
 class Route
 {

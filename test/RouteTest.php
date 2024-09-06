@@ -14,6 +14,7 @@ use SubstancePHP\HTTP\Route;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
+use TestUtil\TestUtil;
 
 #[CoversClass(Route::class)]
 #[CoversMethod(Route::class, 'from')]
@@ -21,15 +22,10 @@ use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
 #[CoversMethod(Route::class, 'execute')]
 class RouteTest extends TestCase
 {
-    private static function getActionRoot(): string
-    {
-        return dirname(__DIR__) . '/testutil/Fixture/action';
-    }
-
     #[Test]
     public function from(): void
     {
-        $actionRoot = self::getActionRoot();
+        $actionRoot = TestUtil::getActionFixtureRoot();
 
         $route = Route::from($actionRoot, 'GET', '/dummy');
         $this->assertInstanceOf(Route::class, $route);
@@ -50,7 +46,7 @@ class RouteTest extends TestCase
     #[Test]
     public function shouldSkip(): void
     {
-        $route = Route::from(self::getActionRoot(), 'GET', '/dummy');
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy');
         \assert($route instanceof Route);
 
         // As far as this method is concerned, the only thing that matters is whether the
@@ -64,7 +60,7 @@ class RouteTest extends TestCase
     #[Test]
     public function execute(): void
     {
-        $route = Route::from(self::getActionRoot(), 'GET', '/dummy');
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy');
         \assert($route instanceof Route);
 
         $context = Container::from(['greetWith' => fn () => 'buongiorno']);

@@ -11,12 +11,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
 use SubstancePHP\HTTP\Internal\MutableRequestHandler;
 
-/**
- * Processes HTTP requests by passing them through a series of middlewares.
- *
- * TODO Consider abolishing SkippableMiddleware base class, and instead using
- *   RequestHandler to arrange middleware skipping.
- */
+/** Processes HTTP requests by passing them through a series of middlewares. */
 readonly class RequestHandler implements RequestHandlerInterface
 {
     /** @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER. */

@@ -11,7 +11,9 @@ namespace SubstancePHP\HTTP;
  */
 readonly class Out
 {
-    // TODO Consider adding an "error bag" field too.
+    // TODO Consider adding an "errors" field too (with structured errors keyed by field).
+    // TODO Consider adding a "meta" field too.
+    // TODO Consider allowing arbitrary top-level data (_not_ under "data" key) via an "extra" field.
 
     /**
      * @param mixed $data the substantive information contained in the output; use this for happy path responses

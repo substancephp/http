@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\Test;
 use SubstancePHP\HTTP\Status;
 
 #[CoversClass(Status::class)]
+#[CoversMethod(Status::class, 'tryFromHTTPCode')]
 #[CoversMethod(Status::class, 'getHTTPCode')]
 #[CoversMethod(Status::class, 'isSuccessful')]
 #[CoversMethod(Status::class, 'getConsoleCode')]
@@ -87,14 +88,40 @@ class StatusTest extends TestCase
     #[DataProvider('statusProvider')]
     public function allMethods(
         Status $status,
-        int $expectedCode,
+        int $code,
         bool $expectedSuccessful,
         int $expectedConsoleCode,
         string $expectedPhrase,
     ): void {
-        $this->assertSame($expectedCode, $status->getHTTPCode());
+        $this->assertSame($code, $status->getHTTPCode());
+        $this->assertSame($status, Status::tryFromHTTPCode($code));
         $this->assertSame($expectedSuccessful, $status->isSuccessful());
         $this->assertSame($expectedConsoleCode, $status->getConsoleCode());
         $this->assertSame($expectedPhrase, $status->getPhrase());
+    }
+
+    #[Test]
+    public function tryFromHTTPCodeWhenUnrecognized(): void
+    {
+        $status = Status::tryFromHTTPCode(999);
+        $this->assertNull($status);
+    }
+
+    #[Test]
+    public function allCasesCovered(): void
+    {
+        $coveredCases = self::statusProvider();
+
+        /** @var array<string> $casesByCovered */
+        $casesByCovered = [];
+        foreach ($coveredCases as $coveredCase) {
+            $covered = $coveredCase[0];
+            \assert($covered instanceof Status);
+            $casesByCovered[$covered->name] = null;
+        }
+
+        foreach (Status::cases() as $case) {
+            $this->assertArrayHasKey($case->name, $casesByCovered);
+        }
     }
 }
