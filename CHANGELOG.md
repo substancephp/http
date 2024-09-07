@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.0.8
+
+* Routing mechanism
+
 ### v0.0.7
 
 * Simplify middleware skipping mechanism
@@ -32,4 +36,4 @@
 
 ### v0.0.1
 
-Initial release, containing "Out" and "Status".
+* Initial release, containing "Out" and "Status".
