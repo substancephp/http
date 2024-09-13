@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### v0.0.9
+
+* Add ContextFactory
+* Add BodyParams, QueryParams, ServerParams classes, injectable via ContextFactory per request
+* Add BodyParserMiddleware, and RequestUtil
+
 ### v0.0.8
 
 * Routing mechanism
