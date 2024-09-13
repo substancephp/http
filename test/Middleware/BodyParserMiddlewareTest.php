@@ -70,6 +70,13 @@ class BodyParserMiddlewareTest extends TestCase
         $instance->process($request, $requestHandler);
         $this->assertSame(['hi' => 'there'], $requestHandler->parsedBody);
 
+        $request = $requestFactory->createServerRequest('POST', '/')
+            ->withHeader('Content-Type', 'application/json')
+            ->withParsedBody([]);
+        $request->getBody()->write('{"hi":"there"}');
+        $instance->process($request, $requestHandler);
+        $this->assertSame(['hi' => 'there'], $requestHandler->parsedBody);
+
         $request = $requestFactory->createServerRequest('PUT', '/')
             ->withHeader('Content-Type', 'application/json');
         $request->getBody()->write('{"hi":"there"}');
