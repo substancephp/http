@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.0.10
+
+* Fix BodyParserMiddleware
+
 ### v0.0.9
 
 * Add ContextFactory
