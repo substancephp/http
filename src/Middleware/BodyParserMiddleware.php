@@ -9,7 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
-use SubstancePHP\HTTP\Util\RequestUtil;
+use SubstancePHP\HTTP\Util\Request;
 
 class BodyParserMiddleware implements MiddlewareInterface
 {
@@ -36,7 +36,7 @@ class BodyParserMiddleware implements MiddlewareInterface
             case 'PUT':
             case 'PATCH':
             case 'DELETE':
-                if (RequestUtil::containsJson($request)) {
+                if (Request::containsJson($request)) {
                     try {
                         $body = (string) $request->getBody();
                         return \json_decode($body, true, 512, \JSON_THROW_ON_ERROR);

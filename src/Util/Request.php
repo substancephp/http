@@ -6,7 +6,7 @@ namespace SubstancePHP\HTTP\Util;
 
 use Psr\Http\Message\ServerRequestInterface;
 
-final class RequestUtil
+final class Request
 {
     public static function containsJson(ServerRequestInterface $request): bool
     {

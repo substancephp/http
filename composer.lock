@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a802b17a50a7aca06395f21fab0a60f1",
+    "content-hash": "03237751feed59daeeb2667146eb9dd8",
     "packages": [
         {
             "name": "psr/container",
@@ -282,16 +282,16 @@
         },
         {
             "name": "substancephp/container",
-            "version": "v0.2.1",
+            "version": "v0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/substancephp/container.git",
-                "reference": "ab4b49272045a379a5d7a97e000efe204c5c17fe"
+                "reference": "a6a1482b14ab46d90f8e9b1fd621f43f1a7e7bba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/substancephp/container/zipball/ab4b49272045a379a5d7a97e000efe204c5c17fe",
-                "reference": "ab4b49272045a379a5d7a97e000efe204c5c17fe",
+                "url": "https://api.github.com/repos/substancephp/container/zipball/a6a1482b14ab46d90f8e9b1fd621f43f1a7e7bba",
+                "reference": "a6a1482b14ab46d90f8e9b1fd621f43f1a7e7bba",
                 "shasum": ""
             },
             "require": {
@@ -301,7 +301,8 @@
             },
             "require-dev": {
                 "phpstan/phpstan": "^1.11",
-                "phpunit/phpunit": "^11.0"
+                "phpunit/phpunit": "^11.0",
+                "squizlabs/php_codesniffer": "*"
             },
             "type": "library",
             "autoload": {
@@ -329,7 +330,7 @@
                 "issues": "https://github.com/substancephp/container/issues",
                 "source": "https://github.com/substancephp/container"
             },
-            "time": "2024-07-13T23:43:01+00:00"
+            "time": "2024-09-15T09:12:18+00:00"
         }
     ],
     "packages-dev": [

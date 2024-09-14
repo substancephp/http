@@ -9,11 +9,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SubstancePHP\HTTP\Util\RequestUtil;
+use SubstancePHP\HTTP\Util\Request;
 
-#[CoversClass(RequestUtil::class)]
-#[CoversMethod(RequestUtil::class, 'containsJson')]
-#[CoversMethod(RequestUtil::class, 'acceptsJson')]
+#[CoversClass(Request::class)]
+#[CoversMethod(Request::class, 'containsJson')]
+#[CoversMethod(Request::class, 'acceptsJson')]
 class RequestUtilTest extends TestCase
 {
     #[Test]
@@ -22,23 +22,23 @@ class RequestUtilTest extends TestCase
         $requestFactory = new ServerRequestFactory();
 
         $request = $requestFactory->createServerRequest('POST', '/');
-        $this->assertFalse(RequestUtil::containsJson($request));
+        $this->assertFalse(Request::containsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('Content-Type', 'application/json');
-        $this->assertTrue(RequestUtil::containsJson($request));
+        $this->assertTrue(Request::containsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('content-type', 'application/json');
-        $this->assertTrue(RequestUtil::containsJson($request));
+        $this->assertTrue(Request::containsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('CONTENT-TYPE', 'application/json;charset=utf-8');
-        $this->assertTrue(RequestUtil::containsJson($request));
+        $this->assertTrue(Request::containsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('Content-Type', 'text/html');
-        $this->assertFalse(RequestUtil::containsJson($request));
+        $this->assertFalse(Request::containsJson($request));
     }
 
     #[Test]
@@ -47,34 +47,34 @@ class RequestUtilTest extends TestCase
         $requestFactory = new ServerRequestFactory();
 
         $request = $requestFactory->createServerRequest('POST', '/');
-        $this->assertTrue(RequestUtil::acceptsJson($request));
+        $this->assertTrue(Request::acceptsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('Accept', 'application/json');
-        $this->assertTrue(RequestUtil::acceptsJson($request));
+        $this->assertTrue(Request::acceptsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('ACCEPT', 'application/json');
-        $this->assertTrue(RequestUtil::acceptsJson($request));
+        $this->assertTrue(Request::acceptsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('accept', 'application/json;charset=utf-8');
-        $this->assertTrue(RequestUtil::acceptsJson($request));
+        $this->assertTrue(Request::acceptsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('accept', 'application/json;charset=utf-32');
-        $this->assertTrue(RequestUtil::acceptsJson($request));
+        $this->assertTrue(Request::acceptsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('Accept', ['application/json;charset=utf-32', 'text/plain;charset=utf-8']);
-        $this->assertTrue(RequestUtil::acceptsJson($request));
+        $this->assertTrue(Request::acceptsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('Accept', ['text/plain', 'application/json']);
-        $this->assertTrue(RequestUtil::acceptsJson($request));
+        $this->assertTrue(Request::acceptsJson($request));
 
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('Accept', 'text/html');
-        $this->assertFalse(RequestUtil::acceptsJson($request));
+        $this->assertFalse(Request::acceptsJson($request));
     }
 }
