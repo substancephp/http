@@ -9,8 +9,8 @@ use SubstancePHP\HTTP\RequestParams;
 
 class ServerParams extends RequestParams
 {
-    public static function from(ServerRequestInterface $request): self
+    public function __construct(ServerRequestInterface $request)
     {
-        return new self($request->getServerParams());
+        parent::__construct($request->getServerParams());
     }
 }

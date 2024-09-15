@@ -23,9 +23,9 @@ class ContextFactory implements ContextFactoryInterface
     {
         return [
             ServerRequestInterface::class => fn () => $request,
-            QueryParams::class => fn () => QueryParams::from($request),
-            BodyParams::class => fn () => BodyParams::from($request),
-            ServerParams::class => fn () => ServerParams::from($request),
+            QueryParams::class => fn () => new QueryParams($request),
+            BodyParams::class => fn () => new BodyParams($request),
+            ServerParams::class => fn () => new ServerParams($request),
         ];
     }
 }

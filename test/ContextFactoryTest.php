@@ -25,6 +25,7 @@ class ContextFactoryTest extends TestCase
     {
         $container = $this->createMock(ContainerInterface::class);
         $container->expects($this->any())->method('get')->with('something')->willReturn('dummy-value');
+        $container->expects($this->any())->method('has')->with('something')->willReturn(true);
         $requestFactory = new ServerRequestFactory();
         $request = $requestFactory->createServerRequest('GET', 'http://example.com/', ['var' => 'val'])
             ->withParsedBody(['hi' => 'there'])

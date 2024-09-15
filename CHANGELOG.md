@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.0.11
+
+* Add JSON utility
+
 ### v0.0.10
 
 * Fix BodyParserMiddleware
