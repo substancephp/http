@@ -2,7 +2,7 @@
 
 ### v0.0.11
 
-* Add JSON utility
+* Add JSON utility, and ordinary constructors for BodyParams, QueryParams and ServerParams.
 
 ### v0.0.10
 
