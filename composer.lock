@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e1507bf15d9ad393a284cb46ca18af8b",
+    "content-hash": "73d71d168e408388d5e61de65069a78a",
     "packages": [
         {
             "name": "psr/container",
@@ -282,16 +282,16 @@
         },
         {
             "name": "substancephp/container",
-            "version": "v0.3.1",
+            "version": "v0.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/substancephp/container.git",
-                "reference": "63c4a559e2ce6faba7ea6023a0a5488375dab354"
+                "reference": "3d99e5658a22e8df7502e2df8e0f441e071a70f1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/substancephp/container/zipball/63c4a559e2ce6faba7ea6023a0a5488375dab354",
-                "reference": "63c4a559e2ce6faba7ea6023a0a5488375dab354",
+                "url": "https://api.github.com/repos/substancephp/container/zipball/3d99e5658a22e8df7502e2df8e0f441e071a70f1",
+                "reference": "3d99e5658a22e8df7502e2df8e0f441e071a70f1",
                 "shasum": ""
             },
             "require": {
@@ -330,7 +330,7 @@
                 "issues": "https://github.com/substancephp/container/issues",
                 "source": "https://github.com/substancephp/container"
             },
-            "time": "2024-09-15T09:32:45+00:00"
+            "time": "2024-09-15T10:34:04+00:00"
         }
     ],
     "packages-dev": [

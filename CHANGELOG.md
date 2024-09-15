@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.0.12
+
+* Dependency version upgrades.
+
 ### v0.0.11
 
 * Add JSON utility, and ordinary constructors for BodyParams, QueryParams and ServerParams.
