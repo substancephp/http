@@ -2,3 +2,4 @@
 .idea
 .phpunit.cache
 html-coverage
+composer.lock
