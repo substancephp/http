@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.0.14
+
+* Dependency version upgrades
+
 ### v0.0.13
 
 * Dependency version upgrades
