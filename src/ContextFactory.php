@@ -18,7 +18,7 @@ class ContextFactory implements ContextFactoryInterface
         return Container::extend($container, $factories);
     }
 
-    /** @return array<string, \Closure(ContainerInterface $c): mixed> */
+    /** @return array<string, \Closure(Container $c, string $id): mixed> */
     protected function createFactories(ServerRequestInterface $request): array
     {
         return [
