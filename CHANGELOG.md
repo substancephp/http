@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### v0.0.17
+
+* Allow QueryParams, BodyParams and ServerParams classes to accept raw arrays in constructor, to
+  make it easier to mock these if required.
+
 ### v0.0.16, v0.0.15, v0.0.14, v0.0.13, v0.0.12
 
 * Dependency version upgrades
