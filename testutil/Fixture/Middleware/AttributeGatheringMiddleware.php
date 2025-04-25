@@ -23,7 +23,6 @@ readonly class AttributeGatheringMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('attribute gathering middleware called', true);
         $attributes = $request->getAttributes();
         $attributes = \json_encode($attributes, JSON_THROW_ON_ERROR);
-        \assert(\is_string($attributes));
         return $this->responseFactory
             ->createResponse()
             ->withHeader('X-Request-Attributes', $attributes);

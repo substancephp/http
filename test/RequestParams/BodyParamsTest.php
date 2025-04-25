@@ -10,27 +10,26 @@ use PHPUnit\Framework\TestCase;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
 
 #[CoversClass(BodyParams::class)]
-#[CoversMethod(BodyParams::class, '__construct')]
+#[CoversMethod(BodyParams::class, 'fromRequest')]
 class BodyParamsTest extends TestCase
 {
     #[Test]
-    public function construct(): void
+    public function fromRequest(): void
     {
         $requestFactory = new ServerRequestFactory();
 
         $request = $requestFactory->createServerRequest('GET', '/');
-        $bodyParams = new BodyParams($request);
-        $this->assertInstanceOf(BodyParams::class, $bodyParams);
+        $bodyParams = BodyParams::fromRequest($request);
         $this->assertSame(0, \count($bodyParams));
         $this->assertSame([], (array) $bodyParams);
 
         $request = $requestFactory->createServerRequest('GET', '/')->withParsedBody(['hello' => 'there']);
-        $bodyParams = new BodyParams($request);
+        $bodyParams = BodyParams::fromRequest($request);
         $this->assertSame('there', $bodyParams['hello']);
         $this->assertTrue($bodyParams->offsetExists('hello'));
 
         $request = $requestFactory->createServerRequest('GET', '/')->withParsedBody((object) ['hello' => [1, 2, 30]]);
-        $bodyParams = new BodyParams($request);
+        $bodyParams = BodyParams::fromRequest($request);
         $this->assertSame([1, 2, 30], $bodyParams['hello']);
     }
 }

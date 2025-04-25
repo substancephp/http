@@ -7,7 +7,7 @@ namespace SubstancePHP\HTTP\Util;
 final class Json
 {
     /**
-     * @return string a JSON representation of the pass content
+     * @return string a JSON representation of the passed content
      * @throws \JsonException if content cannot be JSON-encoded
      */
     public static function of(mixed $content, bool $serializeEmptyAsObject = true): string

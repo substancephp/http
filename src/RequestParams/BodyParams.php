@@ -9,8 +9,8 @@ use SubstancePHP\HTTP\RequestParams;
 
 class BodyParams extends RequestParams
 {
-    public function __construct(ServerRequestInterface $request)
+    public static function fromRequest(ServerRequestInterface $request): self
     {
-        parent::__construct((array) ($request->getParsedBody() ?? []));
+        return new self((array) ($request->getParsedBody() ?? []));
     }
 }

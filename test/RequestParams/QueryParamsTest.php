@@ -10,28 +10,27 @@ use PHPUnit\Framework\TestCase;
 use SubstancePHP\HTTP\RequestParams\QueryParams;
 
 #[CoversClass(QueryParams::class)]
-#[CoversMethod(QueryParams::class, '__construct')]
 #[CoversMethod(QueryParams::class, '__toString')]
+#[CoversMethod(QueryParams::class, 'fromRequest')]
 class QueryParamsTest extends TestCase
 {
     #[Test]
-    public function construct(): void
+    public function fromRequest(): void
     {
         $requestFactory = new ServerRequestFactory();
 
         $request = $requestFactory->createServerRequest('GET', '/');
-        $queryParams = new QueryParams($request);
-        $this->assertInstanceOf(QueryParams::class, $queryParams);
+        $queryParams = QueryParams::fromRequest($request);
         $this->assertSame(0, \count($queryParams));
         $this->assertSame([], (array) $queryParams);
 
         $request = $requestFactory->createServerRequest('GET', '/')->withQueryParams(['hello' => 'there']);
-        $queryParams = new QueryParams($request);
+        $queryParams = QueryParams::fromRequest($request);
         $this->assertSame('there', $queryParams['hello']);
         $this->assertTrue($queryParams->offsetExists('hello'));
 
         $request = $requestFactory->createServerRequest('GET', '/')->withQueryParams(['hello' => [1, 2, 30]]);
-        $queryParams = new QueryParams($request);
+        $queryParams = QueryParams::fromRequest($request);
         $this->assertSame([1, 2, 30], $queryParams['hello']);
     }
 
@@ -41,7 +40,7 @@ class QueryParamsTest extends TestCase
         $requestFactory = new ServerRequestFactory();
 
         $request = $requestFactory->createServerRequest('GET', '/')->withQueryParams(['hello' => 'there']);
-        $queryParams = new QueryParams($request);
+        $queryParams = new QueryParams($request->getQueryParams());
         $this->assertSame('hello=there', (string) $queryParams);
     }
 }

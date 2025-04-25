@@ -10,21 +10,20 @@ use PHPUnit\Framework\TestCase;
 use SubstancePHP\HTTP\RequestParams\ServerParams;
 
 #[CoversClass(ServerParams::class)]
-#[CoversMethod(ServerParams::class, '__construct')]
+#[CoversMethod(ServerParams::class, 'fromRequest')]
 class ServerParamsTest extends TestCase
 {
     #[Test]
-    public function construct(): void
+    public function fromRequest(): void
     {
         $requestFactory = new ServerRequestFactory();
 
         $request = $requestFactory->createServerRequest('GET', '/');
-        $serverParams = new ServerParams($request);
-        $this->assertInstanceOf(ServerParams::class, $serverParams);
+        $serverParams = ServerParams::fromRequest($request);
         $this->assertCount(0, $serverParams);
 
         $request = $requestFactory->createServerRequest('GET', '/', ['hello' => [10, 20, 30]]);
-        $serverParams = new ServerParams($request);
+        $serverParams = ServerParams::fromRequest($request);
         $this->assertSame([10, 20, 30], $serverParams['hello']);
     }
 }

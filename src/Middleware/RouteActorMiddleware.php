@@ -57,7 +57,7 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
         if ($status === Status::NO_CONTENT) {
             return $response;
         }
-        /** @var \ArrayAccess<string, mixed> $json */
+        /** @var \ArrayObject<string, mixed> $json */
         $json = new \ArrayObject([]);
         $message = $out->getMessage();
         if ($message) {

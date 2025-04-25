@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SubstancePHP\HTTP;
 
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
-use SubstancePHP\HTTP\RequestParams\Headers;
 use SubstancePHP\HTTP\RequestParams\QueryParams;
 use SubstancePHP\HTTP\RequestParams\ServerParams;
 use Psr\Container\ContainerInterface;
@@ -23,9 +24,9 @@ class ContextFactory implements ContextFactoryInterface
     {
         return [
             ServerRequestInterface::class => fn () => $request,
-            QueryParams::class => fn () => new QueryParams($request),
-            BodyParams::class => fn () => new BodyParams($request),
-            ServerParams::class => fn () => new ServerParams($request),
+            QueryParams::class => fn () => QueryParams::fromRequest($request),
+            BodyParams::class => fn () => BodyParams::fromRequest($request),
+            ServerParams::class => fn () => ServerParams::fromRequest($request),
         ];
     }
 }
