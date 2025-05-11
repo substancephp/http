@@ -54,7 +54,7 @@ class Application implements ContainerInterface
         );
     }
 
-    public function run(): void
+    public function execute(): void
     {
         $this->runner->run();
     }

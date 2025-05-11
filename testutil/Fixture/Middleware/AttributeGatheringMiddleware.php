@@ -10,9 +10,11 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-readonly class AttributeGatheringMiddleware implements MiddlewareInterface
+class AttributeGatheringMiddleware implements MiddlewareInterface
 {
-    public function __construct(private readonly ResponseFactoryInterface $responseFactory)
+    public bool $called = false;
+
+    public function __construct(private ResponseFactoryInterface $responseFactory)
     {
     }
 
@@ -23,6 +25,7 @@ readonly class AttributeGatheringMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('attribute gathering middleware called', true);
         $attributes = $request->getAttributes();
         $attributes = \json_encode($attributes, JSON_THROW_ON_ERROR);
+        $this->called = true;
         return $this->responseFactory
             ->createResponse()
             ->withHeader('X-Request-Attributes', $attributes);
