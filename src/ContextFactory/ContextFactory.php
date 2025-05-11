@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP;
+namespace SubstancePHP\HTTP\ContextFactory;
 
+use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
 use SubstancePHP\HTTP\RequestParams\QueryParams;
 use SubstancePHP\HTTP\RequestParams\ServerParams;
-use Psr\Container\ContainerInterface;
-use Psr\Http\Message\ServerRequestInterface;
 
 class ContextFactory implements ContextFactoryInterface
 {

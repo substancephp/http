@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP;
+namespace SubstancePHP\HTTP\Environment;
 
 interface EnvironmentInterface
 {

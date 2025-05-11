@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Test;
+namespace Test\ContextFactory;
 
 use Laminas\Diactoros\ServerRequestFactory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\Container\ContainerInterface;
 use SubstancePHP\Container\Container;
-use SubstancePHP\HTTP\ContextFactory;
+use SubstancePHP\HTTP\ContextFactory\ContextFactory;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
 use SubstancePHP\HTTP\RequestParams\QueryParams;
 use SubstancePHP\HTTP\RequestParams\ServerParams;

@@ -2,7 +2,7 @@
 
 namespace SubstancePHP\HTTP\Middleware;
 
-use SubstancePHP\HTTP\RequestHandler;
+use SubstancePHP\HTTP\RequestHandler\RequestHandler;
 
 #[\Attribute(\Attribute::TARGET_FUNCTION)]
 readonly class Skip

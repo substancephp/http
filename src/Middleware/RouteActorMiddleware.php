@@ -12,7 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use SubstancePHP\HTTP\ContextFactoryInterface;
+use SubstancePHP\HTTP\ContextFactory\ContextFactoryInterface;
 use SubstancePHP\HTTP\Exception\BaseException\InvalidActionException;
 use SubstancePHP\HTTP\Exception\BaseException\RoutingException;
 use SubstancePHP\HTTP\Out;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Test;
+namespace Test\RequestHandler;
 
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequestFactory;
@@ -15,14 +15,13 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
-use SubstancePHP\HTTP\Exception\BaseException\UnexpectedRequestAttributeValueException;
-use SubstancePHP\HTTP\Internal\MutableRequestHandler;
-use SubstancePHP\HTTP\RequestHandler;
+use SubstancePHP\HTTP\RequestHandler\Internal\MutableRequestHandler;
+use SubstancePHP\HTTP\RequestHandler\RequestHandler;
 use SubstancePHP\HTTP\Route;
 use TestUtil\Fixture\Middleware\AttributeGatheringMiddleware;
-use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
+use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 use TestUtil\TestUtil;
 
 #[CoversClass(RequestHandler::class)]

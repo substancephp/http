@@ -12,6 +12,10 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use SubstancePHP\Container\Container;
+use SubstancePHP\HTTP\Environment\Environment;
+use SubstancePHP\HTTP\ErrorResponseFallbackGenerator\ErrorResponseFallbackGeneratorInterface;
+use SubstancePHP\HTTP\Provider\ProviderInterface;
+use SubstancePHP\HTTP\RequestHandler\RequestHandler;
 
 class Application implements ContainerInterface
 {
@@ -23,23 +27,30 @@ class Application implements ContainerInterface
      * @param class-string<ProviderInterface>[] $providers
      * @param class-string<MiddlewareInterface>[] $middlewares
      */
-    public function __construct(array $env, array $providers, array $middlewares)
-    {
+    public function __construct(
+        array $env,
+        string $actionRoot,
+        array $providers,
+        array $middlewares,
+    ) {
         $environment = new Environment($env);
         $factorySets = \array_map(fn ($provider) => $provider::factories($environment), $providers);
-        $this->container = Container::from(\array_merge(...$factorySets));
-        $handler = RequestHandler::from(\array_map($this->container->get(...), $middlewares));
-        $serverRequestErrorResponseGenerator = $this->container->get(ErrorResponseFallbackGenerator::class);
+        $factories = \array_merge(...$factorySets);
+        $factories['substance.action-root'] = fn () => $actionRoot;
+        $this->container = Container::from($factories);
         try {
-            $emitter = $this->container->get(EmitterInterface::class);
+            $handler = RequestHandler::from(\array_map($this->get(...), $middlewares));
+            $emitter = $this->get(EmitterInterface::class);
+            $serverRequestFactory = ServerRequestFactory::fromGlobals(...);
+            $errorResponseFallbackGenerator = $this->get(ErrorResponseFallbackGeneratorInterface::class);
         } catch (ContainerExceptionInterface $e) {
             throw new \RuntimeException(message: $e->getMessage(), previous: $e);
         }
         $this->runner = new RequestHandlerRunner(
             handler: $handler,
             emitter: $emitter,
-            serverRequestFactory: ServerRequestFactory::fromGlobals(...),
-            serverRequestErrorResponseGenerator: $serverRequestErrorResponseGenerator,
+            serverRequestFactory: $serverRequestFactory,
+            serverRequestErrorResponseGenerator: $errorResponseFallbackGenerator,
         );
     }
 
