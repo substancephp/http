@@ -1,5 +1,14 @@
 # CHANGELOG
 
+### v0.0.18
+
+Major:
+* Add Application, Emitter, Environment and Provider abstractions
+
+Minor:
+* Change `composer check` to `composer qa` command to avoid name clash
+* Upgrade CI to run PHP 8.4
+
 ### v0.0.17
 
 * Allow QueryParams, BodyParams and ServerParams classes to accept raw arrays in constructor, to
