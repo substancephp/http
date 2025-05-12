@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP\Provider;
+namespace SubstancePHP\HTTP;
 
 use SubstancePHP\Container\Container;
-use SubstancePHP\HTTP\Environment\EnvironmentInterface;
 
 interface ProviderInterface
 {

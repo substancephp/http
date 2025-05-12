@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP\ErrorResponseFallbackGenerator;
+namespace SubstancePHP\HTTP;
 
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;

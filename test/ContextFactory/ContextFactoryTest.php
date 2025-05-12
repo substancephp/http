@@ -11,13 +11,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use SubstancePHP\Container\Container;
-use SubstancePHP\HTTP\ContextFactory\ContextFactory;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
 use SubstancePHP\HTTP\RequestParams\QueryParams;
 use SubstancePHP\HTTP\RequestParams\ServerParams;
 
-#[CoversClass(ContextFactory::class)]
-#[CoversMethod(ContextFactory::class, 'createContext')]
+#[CoversClass(\SubstancePHP\HTTP\ContextFactory::class)]
+#[CoversMethod(\SubstancePHP\HTTP\ContextFactory::class, 'createContext')]
 class ContextFactoryTest extends TestCase
 {
     #[Test]
@@ -31,7 +30,7 @@ class ContextFactoryTest extends TestCase
             ->withParsedBody(['hi' => 'there'])
             ->withQueryParams(['foo' => 'bar']);
 
-        $contextFactory = new ContextFactory();
+        $contextFactory = new \SubstancePHP\HTTP\ContextFactory();
 
         $context = $contextFactory->createContext($container, $request);
         $this->assertInstanceOf(Container::class, $context);

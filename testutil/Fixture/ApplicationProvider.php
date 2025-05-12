@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace TestUtil\Fixture;
 
-use Dom\Attr;
 use SubstancePHP\Container\Container;
-use SubstancePHP\HTTP\Environment\EnvironmentInterface;
-use SubstancePHP\HTTP\Provider\ProviderInterface;
+use SubstancePHP\HTTP\EnvironmentInterface;
+use SubstancePHP\HTTP\ProviderInterface;
 use TestUtil\Fixture\Middleware\AttributeGatheringMiddleware;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareB;

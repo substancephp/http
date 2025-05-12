@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Test\Environment;
+namespace Test;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SubstancePHP\HTTP\Environment\Environment;
+use SubstancePHP\HTTP\Environment;
 
-#[CoversClass(Environment::class)]
-#[CoversMethod(Environment::class, '__construct')]
-#[CoversMethod(Environment::class, 'get')]
+#[CoversClass(\SubstancePHP\HTTP\Environment::class)]
+#[CoversMethod(\SubstancePHP\HTTP\Environment::class, '__construct')]
+#[CoversMethod(\SubstancePHP\HTTP\Environment::class, 'get')]
 class EnvironmentTest extends TestCase
 {
     #[Test]

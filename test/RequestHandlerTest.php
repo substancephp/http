@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Test\RequestHandler;
+namespace Test;
 
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequestFactory;
@@ -15,8 +15,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
-use SubstancePHP\HTTP\RequestHandler\Internal\MutableRequestHandler;
-use SubstancePHP\HTTP\RequestHandler\RequestHandler;
+use SubstancePHP\HTTP\Internal\MutableRequestHandler;
+use SubstancePHP\HTTP\RequestHandler;
 use SubstancePHP\HTTP\Route;
 use TestUtil\Fixture\Middleware\AttributeGatheringMiddleware;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
@@ -71,8 +71,8 @@ class RequestHandlerTest extends TestCase
     }
 
     /**
-     * @param array<string> &$messages
-     * @return array<MiddlewareInterface>
+     * @param string[] &$messages
+     * @return MiddlewareInterface[]
      */
     private function getDummyMiddlewares(array &$messages): array
     {

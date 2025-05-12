@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP\RequestHandler\Internal;
+namespace SubstancePHP\HTTP\Internal;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

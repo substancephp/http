@@ -2,7 +2,7 @@
 
 namespace SubstancePHP\HTTP\Middleware;
 
-use SubstancePHP\HTTP\RequestHandler\RequestHandler;
+use SubstancePHP\HTTP\RequestHandler;
 
 #[\Attribute(\Attribute::TARGET_FUNCTION)]
 readonly class Skip
@@ -12,7 +12,7 @@ readonly class Skip
 
     /**
      * @param string ...$middlewares the fully qualified class names of the PSR-15 middleware classes that should be
-     *   skipped when running a request-handling action callback via {@see RequestHandler}.
+     *   skipped when running a request-handling action callback via {@see \SubstancePHP\HTTP\RequestHandler}.
      */
     public function __construct(string ...$middlewares)
     {

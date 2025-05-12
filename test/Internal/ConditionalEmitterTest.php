@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Test\Emitter\Internal;
+namespace Test\Internal;
 
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use SubstancePHP\HTTP\Emitter\Internal\ConditionalEmitter;
+use SubstancePHP\HTTP\Internal\ConditionalEmitter;
 
 #[CoversClass(ConditionalEmitter::class)]
 #[CoversMethod(ConditionalEmitter::class, 'emit')]

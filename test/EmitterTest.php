@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Test\Emitter;
+namespace Test;
 
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use SubstancePHP\HTTP\Emitter\Emitter;
+use SubstancePHP\HTTP\Emitter;
 
-#[CoversClass(Emitter::class)]
-#[CoversMethod(Emitter::class, '__construct')]
+#[CoversClass(\SubstancePHP\HTTP\Emitter::class)]
+#[CoversMethod(\SubstancePHP\HTTP\Emitter::class, '__construct')]
 class EmitterTest extends TestCase
 {
     #[Test]

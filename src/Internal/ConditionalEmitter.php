@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP\Emitter\Internal;
+namespace SubstancePHP\HTTP\Internal;
 
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 use Psr\Http\Message\ResponseInterface;

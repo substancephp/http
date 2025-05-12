@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP\ContextFactory;
+namespace SubstancePHP\HTTP;
 
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;

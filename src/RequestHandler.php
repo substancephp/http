@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP\RequestHandler;
+namespace SubstancePHP\HTTP;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
-use SubstancePHP\HTTP\RequestHandler\Internal\MutableRequestHandler;
+use SubstancePHP\HTTP\Internal\MutableRequestHandler;
 
 /** Processes HTTP requests by passing them through a series of middlewares. */
 readonly class RequestHandler implements RequestHandlerInterface

@@ -12,10 +12,6 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use SubstancePHP\Container\Container;
-use SubstancePHP\HTTP\Environment\Environment;
-use SubstancePHP\HTTP\ErrorResponseFallbackGenerator\ErrorResponseFallbackGeneratorInterface;
-use SubstancePHP\HTTP\Provider\ProviderInterface;
-use SubstancePHP\HTTP\RequestHandler\RequestHandler;
 
 class Application implements ContainerInterface
 {

@@ -2,18 +2,12 @@
 
 declare(strict_types=1);
 
-namespace SubstancePHP\HTTP\Provider;
+namespace SubstancePHP\HTTP;
 
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Log\LoggerInterface;
-use SubstancePHP\HTTP\ContextFactory\ContextFactory;
-use SubstancePHP\HTTP\ContextFactory\ContextFactoryInterface;
-use SubstancePHP\HTTP\Emitter\Emitter;
-use SubstancePHP\HTTP\Environment\EnvironmentInterface;
-use SubstancePHP\HTTP\ErrorResponseFallbackGenerator\ErrorResponseFallbackGenerator;
-use SubstancePHP\HTTP\ErrorResponseFallbackGenerator\ErrorResponseFallbackGeneratorInterface;
 use SubstancePHP\HTTP\Middleware\BodyParserMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteMatcherMiddleware;
