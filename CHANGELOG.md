@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### v0.0.19
+
+Major:
+* Add SubstanceProvider
+* Renaming, restructuring namespaces slightly
+
 ### v0.0.18
 
 Major:

@@ -6,7 +6,8 @@
 
 `substancephp/http` is an opinionated library for building JSON REST APIs.
 
-This is a work in progress and is not ready for use.
+This is a work in progress and is not ready for use. There are regularly breaking changes from
+version to version.
 
 ## Installation
 
