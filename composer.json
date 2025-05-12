@@ -46,7 +46,7 @@
     "minimum-stability": "stable",
     "scripts": {
         "qa": ["@stan", "@test", "@cs"],
-        "stan": "vendor/bin/phpstan analyse --level=7 src test testutil",
+        "stan": "vendor/bin/phpstan analyse --level=8 src test testutil",
         "cs": "vendor/bin/phpcs --standard=PSR12 src test testutil",
         "test": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-text test",
         "serve-coverage-report": "php -S localhost:3000 -t html-coverage",
