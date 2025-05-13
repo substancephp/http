@@ -34,14 +34,12 @@ class Application implements ContainerInterface
         $factories = \array_merge(...$factorySets);
         $factories['substance.action-root'] = fn () => $actionRoot;
         $this->container = Container::from($factories);
-        try {
-            $handler = RequestHandler::from(\array_map($this->get(...), $middlewares));
-            $emitter = $this->get(EmitterInterface::class);
-            $serverRequestFactory = ServerRequestFactory::fromGlobals(...);
-            $errorResponseFallbackGenerator = $this->get(ErrorResponseFallbackGeneratorInterface::class);
-        } catch (ContainerExceptionInterface $e) {
-            throw new \RuntimeException(message: $e->getMessage(), previous: $e);
-        }
+
+        $handler = RequestHandler::from(\array_map($this->get(...), $middlewares));
+        $emitter = $this->get(EmitterInterface::class);
+        $serverRequestFactory = ServerRequestFactory::fromGlobals(...);
+        $errorResponseFallbackGenerator = $this->get(ErrorResponseFallbackGeneratorInterface::class);
+
         $this->runner = new RequestHandlerRunner(
             handler: $handler,
             emitter: $emitter,
