@@ -6,6 +6,7 @@ namespace Test;
 
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequestFactory;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,7 @@ use TestUtil\TestUtil;
 #[CoversClass(MutableRequestHandler::class)]
 #[CoversMethod(MutableRequestHandler::class, '__construct')]
 #[CoversMethod(MutableRequestHandler::class, 'handle')]
+#[AllowMockObjectsWithoutExpectations]
 class RequestHandlerTest extends TestCase
 {
     #[Test]

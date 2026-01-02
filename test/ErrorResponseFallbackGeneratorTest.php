@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Test;
 
 use Laminas\Diactoros\Response;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -15,6 +16,7 @@ use SubstancePHP\HTTP\ErrorResponseFallbackGenerator;
 
 #[CoversClass(ErrorResponseFallbackGenerator::class)]
 #[CoversMethod(ErrorResponseFallbackGenerator::class, '__invoke')]
+#[AllowMockObjectsWithoutExpectations]
 class ErrorResponseFallbackGeneratorTest extends TestCase
 {
     #[Test]

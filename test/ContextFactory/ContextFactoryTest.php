@@ -5,18 +5,21 @@ declare(strict_types=1);
 namespace Test\ContextFactory;
 
 use Laminas\Diactoros\ServerRequestFactory;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use SubstancePHP\Container\Container;
+use SubstancePHP\HTTP\ContextFactory;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
 use SubstancePHP\HTTP\RequestParams\QueryParams;
 use SubstancePHP\HTTP\RequestParams\ServerParams;
 
-#[CoversClass(\SubstancePHP\HTTP\ContextFactory::class)]
-#[CoversMethod(\SubstancePHP\HTTP\ContextFactory::class, 'createContext')]
+#[CoversClass(ContextFactory::class)]
+#[CoversMethod(ContextFactory::class, 'createContext')]
+#[AllowMockObjectsWithoutExpectations]
 class ContextFactoryTest extends TestCase
 {
     #[Test]
@@ -30,7 +33,7 @@ class ContextFactoryTest extends TestCase
             ->withParsedBody(['hi' => 'there'])
             ->withQueryParams(['foo' => 'bar']);
 
-        $contextFactory = new \SubstancePHP\HTTP\ContextFactory();
+        $contextFactory = new ContextFactory();
 
         $context = $contextFactory->createContext($container, $request);
         $this->assertInstanceOf(Container::class, $context);

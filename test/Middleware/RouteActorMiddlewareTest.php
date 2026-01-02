@@ -6,6 +6,7 @@ namespace Test\Middleware;
 
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequestFactory;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -26,6 +27,7 @@ use TestUtil\TestUtil;
 #[CoversClass(RouteActorMiddleware::class)]
 #[CoversMethod(RouteActorMiddleware::class, '__construct')]
 #[CoversMethod(RouteActorMiddleware::class, 'process')]
+#[AllowMockObjectsWithoutExpectations]
 class RouteActorMiddlewareTest extends TestCase
 {
     private function makeInstance(): RouteActorMiddleware
