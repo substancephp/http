@@ -2,6 +2,6 @@
 
 declare(strict_types=1);
 
-return function (): int {
+return static function (): int {
     return 200;
 };
