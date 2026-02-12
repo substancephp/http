@@ -9,7 +9,6 @@ use Laminas\Diactoros\ServerRequestFactory;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -18,10 +17,9 @@ use SubstancePHP\HTTP\ContextFactoryInterface;
 use SubstancePHP\HTTP\Exception\BaseException\InvalidActionException;
 use SubstancePHP\HTTP\Exception\BaseException\RoutingException;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
-use SubstancePHP\HTTP\Out;
 use SubstancePHP\HTTP\RequestHandler;
+use SubstancePHP\HTTP\Respond;
 use SubstancePHP\HTTP\Route;
-use SubstancePHP\HTTP\Status;
 use TestUtil\TestUtil;
 
 #[CoversClass(RouteActorMiddleware::class)]
@@ -34,7 +32,7 @@ class RouteActorMiddlewareTest extends TestCase
     {
         $container = $this->createMock(ContainerInterface::class);
         $contextFactory = $this->createMock(ContextFactoryInterface::class);
-        $context = Container::from([]);
+        $context = Container::from([Respond::class => fn () => new Respond(200)]);
         $contextFactory->expects($this->any())->method('createContext')->willReturn($context);
         $responseFactory = new ResponseFactory();
         return new RouteActorMiddleware($container, $contextFactory, $responseFactory);
@@ -78,27 +76,6 @@ class RouteActorMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function processUnhappyPathBadActionCallback(): void
-    {
-        $requestFactory = new ServerRequestFactory();
-        $requestHandler = $this->createMock(RequestHandler::class);
-        $instance = $this->makeInstance();
-
-        $route = Route::from(
-            actionRoot: TestUtil::getActionFixtureRoot(),
-            method: 'GET',
-            path: '/dummy-bad-callback-return',
-        );
-
-        $request = $requestFactory
-            ->createServerRequest('GET', '/dummy-back-callback-return')
-            ->withAttribute(Route::class, $route);
-
-        $this->expectException(InvalidActionException::class);
-        $instance->process($request, $requestHandler);
-    }
-
-    #[Test]
     public function processHappyPathNoContentResponse(): void
     {
         $requestFactory = new ServerRequestFactory();
@@ -121,56 +98,25 @@ class RouteActorMiddlewareTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('provideMessageDataCombos')]
-    public function processWithMessageDataCombos(
-        Out $returnFromAction,
-        string $expectedContent,
-        int $expectedStatusCode,
-    ): void {
+    public function processHappyPathValidationErrorResponse(): void
+    {
         $requestFactory = new ServerRequestFactory();
         $requestHandler = $this->createMock(RequestHandler::class);
         $instance = $this->makeInstance();
 
-        $route = $this->createMock(Route::class);
-        $route->expects($this->once())->method('execute')->willReturn($returnFromAction);
+        $route = Route::from(
+            actionRoot: TestUtil::getActionFixtureRoot(),
+            method: 'PUT',
+            path: '/dummy-unprocessable',
+        );
 
-        $request = $requestFactory->createServerRequest('GET', '/mocked')
+        $request = $requestFactory
+            ->createServerRequest('PUT', '/dummy-unprocessable')
             ->withAttribute(Route::class, $route);
+        $request->getBody()->write('{"hello":"world"}');
 
         $response = $instance->process($request, $requestHandler);
-        $this->assertSame($expectedContent, (string) $response->getBody());
-        $this->assertSame($expectedStatusCode, $response->getStatusCode());
-    }
-
-    /** @return array<array{Out, string, int}> */
-    public static function provideMessageDataCombos(): array
-    {
-        return [
-            [
-                Out::noContent(),
-                '',
-                204,
-            ],
-            [
-                Out::unauthorized(),
-                '{"message":"Unauthorized"}',
-                401,
-            ],
-            [
-                Out::unauthorized('No can do'),
-                '{"message":"No can do"}',
-                401,
-            ],
-            [
-                Out::data(['quantity' => 50]),
-                '{"data":{"quantity":50}}',
-                200,
-            ],
-            [
-                Out::data(['quantity' => 50], Status::TEMPORARY_REDIRECT),
-                '{"data":{"quantity":50}}',
-                307,
-            ],
-        ];
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertSame('{"message":"Invalid request body"}', (string) $response->getBody());
     }
 }

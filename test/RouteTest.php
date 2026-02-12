@@ -65,7 +65,6 @@ class RouteTest extends TestCase
 
         $context = Container::from(['greetWith' => fn () => 'buongiorno']);
         $out = $route->execute($context);
-        $this->assertInstanceOf(Out::class, $out);
-        $this->assertSame(['greeting' => 'buongiorno'], $out->getData());
+        $this->assertSame(['data' => ['greeting' => 'buongiorno']], $out);
     }
 }

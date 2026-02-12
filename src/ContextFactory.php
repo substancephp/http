@@ -27,6 +27,10 @@ class ContextFactory implements ContextFactoryInterface
             QueryParams::class => fn () => QueryParams::fromRequest($request),
             BodyParams::class => fn () => BodyParams::fromRequest($request),
             ServerParams::class => fn () => ServerParams::fromRequest($request),
+            Respond::class => fn () => new Respond(match (\strtoupper($request->getMethod())) {
+                'POST' => 201,
+                default => 200,
+            }),
         ];
     }
 }

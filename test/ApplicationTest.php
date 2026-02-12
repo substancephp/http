@@ -24,7 +24,7 @@ use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 class ApplicationTest extends TestCase
 {
     #[Test]
-    public function testHappyPath(): void
+    public function happyPath(): void
     {
         $env = ['FOO' => 'fooval', 'BAR' => 'barval'];
         $actionRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'action']);
@@ -57,7 +57,7 @@ class ApplicationTest extends TestCase
     }
 
     #[Test]
-    public function testBadDI(): void
+    public function badDI(): void
     {
         $env = ['FOO' => 'fooval', 'BAR' => 'barval'];
         $actionRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'action']);

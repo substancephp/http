@@ -16,6 +16,7 @@ use SubstancePHP\HTTP\ContextFactory;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
 use SubstancePHP\HTTP\RequestParams\QueryParams;
 use SubstancePHP\HTTP\RequestParams\ServerParams;
+use SubstancePHP\HTTP\Respond;
 
 #[CoversClass(ContextFactory::class)]
 #[CoversMethod(ContextFactory::class, 'createContext')]
@@ -41,6 +42,7 @@ class ContextFactoryTest extends TestCase
         $this->assertInstanceOf(QueryParams::class, $context->get(QueryParams::class));
         $this->assertInstanceOf(ServerParams::class, $context->get(ServerParams::class));
         $this->assertInstanceOf(BodyParams::class, $context->get(BodyParams::class));
+        $this->assertInstanceOf(Respond::class, $context->get(Respond::class));
 
         $this->assertSame('val', $context->get(ServerParams::class)['var']);
         $this->assertSame('there', $context->get(BodyParams::class)['hi']);

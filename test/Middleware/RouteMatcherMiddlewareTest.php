@@ -16,7 +16,6 @@ use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
 use SubstancePHP\HTTP\Middleware\RouteMatcherMiddleware;
-use SubstancePHP\HTTP\Out;
 use SubstancePHP\HTTP\Route;
 use TestUtil\TestUtil;
 
@@ -61,8 +60,7 @@ class RouteMatcherMiddlewareTest extends TestCase
             $route = $requestHandler->route;
             $this->assertInstanceOf(Route::class, $route);
             $out = $route->execute(Container::from(['greetWith' => fn () => 'hi']));
-            $this->assertInstanceOf(Out::class, $out);
-            $this->assertSame(['greeting' => 'hi'], $out->getData());
+            $this->assertSame(['data' => ['greeting' => 'hi']], $out);
         })();
 
         # another happy path
@@ -72,8 +70,7 @@ class RouteMatcherMiddlewareTest extends TestCase
             $route = $requestHandler->route;
             $this->assertInstanceOf(Route::class, $route);
             $out = $route->execute(Container::from([]));
-            $this->assertInstanceOf(Out::class, $out);
-            $this->assertSame(['another route reached' => true], $out->getData());
+            $this->assertSame(['data' => ['another route reached' => true]], $out);
         })();
 
         # unhappy path - wrong HTTP method

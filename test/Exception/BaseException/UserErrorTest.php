@@ -6,6 +6,7 @@ namespace Test\Exception\BaseException;
 
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
@@ -27,7 +28,7 @@ class UserErrorTest extends TestCase
     }
 
     #[Test]
-    public function throw(): void
+    public function throwWithCustomMessage(): void
     {
         try {
             UserError::throw(422, 'Invalid inputs');
@@ -37,14 +38,7 @@ class UserErrorTest extends TestCase
         }
 
         try {
-            UserError::throw(422);
-        } catch (UserError $userError) {
-            $this->assertSame('Unprocessable Entity', $userError->getMessage());
-            $this->assertSame(422, $userError->getStatusCode());
-        }
-
-        try {
-            UserError::throw(999);
+            UserError::throw(999, '');
         } catch (UserError $userError) {
             $this->assertSame('', $userError->getMessage());
             $this->assertSame(999, $userError->getStatusCode());
@@ -55,6 +49,23 @@ class UserErrorTest extends TestCase
         } catch (UserError $userError) {
             $this->assertSame('my custom status', $userError->getMessage());
             $this->assertSame(999, $userError->getStatusCode());
+        }
+    }
+
+    #[Test]
+    #[TestWith([999, '999 error'])]
+    #[TestWith([422, 'Unprocessable Entity'])]
+    #[TestWith([401, 'Unauthorized'])]
+    #[TestWith([403, 'Forbidden'])]
+    #[TestWith([404, 'Not Found'])]
+    #[TestWith([409, 'Conflict'])]
+    public function throwWithDefaultMessage(int $statusCode, string $expectedMessage): void
+    {
+        try {
+            UserError::throw($statusCode);
+        } catch (UserError $userError) {
+            $this->assertSame($expectedMessage, $userError->getMessage());
+            $this->assertSame($statusCode, $userError->getStatusCode());
         }
     }
 
