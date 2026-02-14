@@ -1,5 +1,12 @@
 # CHANGELOG
 
+### v0.1.0
+
+Major:
+* Abolish 'Out' abstraction. Instead, return the response data directly.
+* Introduce invokable 'Respond' class for adjusting status code.
+* Abolish 'Status' abstraction. Just use the status integers directly.
+
 ### v0.0.19
 
 Major:
