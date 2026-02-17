@@ -14,37 +14,45 @@ use SubstancePHP\Container\Container;
 
 class Application implements ContainerInterface
 {
-    private ContainerInterface $container;
-    private RequestHandlerRunnerInterface $runner;
+    private function __construct(
+        private ContainerInterface $container,
+        private RequestHandlerRunnerInterface $runner,
+    ) {
+    }
 
     /**
      * @param array<string, mixed> $env
      * @param class-string<ProviderInterface>[] $providers
      * @param class-string<MiddlewareInterface>[] $middlewares
      */
-    public function __construct(
+    public static function make(
         array $env,
         string $actionRoot,
+        string $templateRoot,
         array $providers,
         array $middlewares,
-    ) {
+    ): self {
+        // TODO Consider specialising application constructors for JSON-only or HTML-only.
         $environment = new Environment($env);
         $factorySets = \array_map(fn ($provider) => $provider::factories($environment), $providers);
         $factories = \array_merge(...$factorySets);
         $factories['substance.action-root'] = fn () => $actionRoot;
-        $this->container = Container::from($factories);
+        $factories['substance.template-root'] = fn () => $templateRoot;
+        $container = Container::from($factories);
 
-        $handler = RequestHandler::from(\array_map($this->get(...), $middlewares));
-        $emitter = $this->get(EmitterInterface::class);
+        $handler = RequestHandler::from(\array_map($container->get(...), $middlewares));
+        $emitter = $container->get(EmitterInterface::class);
         $serverRequestFactory = ServerRequestFactory::fromGlobals(...);
-        $errorResponseFallbackGenerator = $this->get(ErrorResponseFallbackGeneratorInterface::class);
+        $errorResponseFallbackGenerator = $container->get(ErrorResponseFallbackGeneratorInterface::class);
 
-        $this->runner = new RequestHandlerRunner(
+        $runner = new RequestHandlerRunner(
             handler: $handler,
             emitter: $emitter,
             serverRequestFactory: $serverRequestFactory,
             serverRequestErrorResponseGenerator: $errorResponseFallbackGenerator,
         );
+
+        return new self($container, $runner);
     }
 
     public function execute(): void

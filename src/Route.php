@@ -47,11 +47,11 @@ class Route
     public static function from(string $actionRoot, string $method, string $path): ?self
     {
         $lowerMethod = \strtolower($method);
-        $filepath = "$actionRoot/$path.$lowerMethod.php";
-        if (! \file_exists($filepath)) {
+        $actionPath = "$actionRoot/$path.$lowerMethod.php";
+        if (! \file_exists($actionPath)) {
             return null;
         }
-        $content = require $filepath;
+        $content = require $actionPath;
         if (! \is_callable($content)) {
             return null;
         }

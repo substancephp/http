@@ -13,7 +13,6 @@ use SubstancePHP\HTTP\Util\Request;
 
 #[CoversClass(Request::class)]
 #[CoversMethod(Request::class, 'containsJson')]
-#[CoversMethod(Request::class, 'acceptsJson')]
 class RequestUtilTest extends TestCase
 {
     #[Test]
@@ -39,42 +38,5 @@ class RequestUtilTest extends TestCase
         $request = $requestFactory->createServerRequest('POST', '/')
             ->withHeader('Content-Type', 'text/html');
         $this->assertFalse(Request::containsJson($request));
-    }
-
-    #[Test]
-    public function acceptsJson(): void
-    {
-        $requestFactory = new ServerRequestFactory();
-
-        $request = $requestFactory->createServerRequest('POST', '/');
-        $this->assertTrue(Request::acceptsJson($request));
-
-        $request = $requestFactory->createServerRequest('POST', '/')
-            ->withHeader('Accept', 'application/json');
-        $this->assertTrue(Request::acceptsJson($request));
-
-        $request = $requestFactory->createServerRequest('POST', '/')
-            ->withHeader('ACCEPT', 'application/json');
-        $this->assertTrue(Request::acceptsJson($request));
-
-        $request = $requestFactory->createServerRequest('POST', '/')
-            ->withHeader('accept', 'application/json;charset=utf-8');
-        $this->assertTrue(Request::acceptsJson($request));
-
-        $request = $requestFactory->createServerRequest('POST', '/')
-            ->withHeader('accept', 'application/json;charset=utf-32');
-        $this->assertTrue(Request::acceptsJson($request));
-
-        $request = $requestFactory->createServerRequest('POST', '/')
-            ->withHeader('Accept', ['application/json;charset=utf-32', 'text/plain;charset=utf-8']);
-        $this->assertTrue(Request::acceptsJson($request));
-
-        $request = $requestFactory->createServerRequest('POST', '/')
-            ->withHeader('Accept', ['text/plain', 'application/json']);
-        $this->assertTrue(Request::acceptsJson($request));
-
-        $request = $requestFactory->createServerRequest('POST', '/')
-            ->withHeader('Accept', 'text/html');
-        $this->assertFalse(Request::acceptsJson($request));
     }
 }

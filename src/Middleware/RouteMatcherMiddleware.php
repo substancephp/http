@@ -8,13 +8,16 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use SubstancePHP\Container\Inject;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
 use SubstancePHP\HTTP\Route;
+use SubstancePHP\HTTP\Util\Request;
 
 readonly class RouteMatcherMiddleware implements MiddlewareInterface
 {
-    public function __construct(private string $actionRoot)
-    {
+    public function __construct(
+        #[Inject('substance.action-root')] private string $actionRoot,
+    ) {
     }
 
     /**

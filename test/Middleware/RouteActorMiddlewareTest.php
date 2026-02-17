@@ -14,9 +14,9 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\ContextFactoryInterface;
-use SubstancePHP\HTTP\Exception\BaseException\InvalidActionException;
 use SubstancePHP\HTTP\Exception\BaseException\RoutingException;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
+use SubstancePHP\HTTP\RendererFactory;
 use SubstancePHP\HTTP\RequestHandler;
 use SubstancePHP\HTTP\Respond;
 use SubstancePHP\HTTP\Route;
@@ -32,10 +32,12 @@ class RouteActorMiddlewareTest extends TestCase
     {
         $container = $this->createMock(ContainerInterface::class);
         $contextFactory = $this->createMock(ContextFactoryInterface::class);
-        $context = Container::from([Respond::class => fn () => new Respond(200)]);
+        $context = Container::from([Respond::class => fn () => new Respond(200, 'application/json')]);
         $contextFactory->expects($this->any())->method('createContext')->willReturn($context);
         $responseFactory = new ResponseFactory();
-        return new RouteActorMiddleware($container, $contextFactory, $responseFactory);
+        $templateRoot = \implode(DIRECTORY_SEPARATOR, [\dirname(__DIR__, 2), 'testutil', 'fixture', 'template']);
+        $rendererFactory = new RendererFactory($templateRoot);
+        return new RouteActorMiddleware($container, $contextFactory, $rendererFactory, $responseFactory);
     }
 
     #[Test]

@@ -14,6 +14,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\ContextFactoryInterface;
 use SubstancePHP\HTTP\Exception\BaseException\RoutingException;
+use SubstancePHP\HTTP\RendererFactoryInterface;
 use SubstancePHP\HTTP\Respond;
 use SubstancePHP\HTTP\Route;
 
@@ -27,6 +28,7 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
     public function __construct(
         private ContainerInterface $container,
         private ContextFactoryInterface $contextFactory,
+        private RendererFactoryInterface $rendererFactory,
         private ResponseFactoryInterface $responseFactory,
     ) {
     }
@@ -46,12 +48,20 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
         }
         $context = $this->contextFactory->createContext($this->container, $request);
         $responseData = $route->execute($context);
+
         /** @var Respond $respond */
         $respond = $context->get(Respond::class);
-        $response = $this->responseFactory->createResponse($respond->statusCode);
-        if ($respond->statusCode != 204) {
-            $response->getBody()->write(\json_encode($responseData, \JSON_THROW_ON_ERROR));
+        $statusCode = $respond->statusCode;
+        $contentType = $respond->contentType;
+
+        if ($statusCode == 204) {
+            return $this->responseFactory->createResponse($statusCode);
         }
+
+        $response = $this->responseFactory->createResponse($statusCode)->withHeader('Content-Type', $contentType);
+        $renderer = $this->rendererFactory->createRenderer($request->getUri()->getPath(), $contentType, $responseData);
+        $responseContent = $renderer->render();
+        $response->getBody()->write($responseContent);
         return $response;
     }
 }

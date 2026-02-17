@@ -28,9 +28,11 @@ class ApplicationTest extends TestCase
     {
         $env = ['FOO' => 'fooval', 'BAR' => 'barval'];
         $actionRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'action']);
-        $instance = new Application(
+        $templateRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'template']);
+        $instance = Application::make(
             env: $env,
             actionRoot: $actionRoot,
+            templateRoot: $templateRoot,
             providers: [
                 SubstanceProvider::class,
                 ApplicationProvider::class,
@@ -61,10 +63,12 @@ class ApplicationTest extends TestCase
     {
         $env = ['FOO' => 'fooval', 'BAR' => 'barval'];
         $actionRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'action']);
+        $templateRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'template']);
         $this->expectException(\RuntimeException::class);
-        new Application(
+        Application::make(
             env: $env,
             actionRoot: $actionRoot,
+            templateRoot: $templateRoot,
             providers: [ApplicationProvider::class],
             middlewares: [ExampleMiddlewareA::class, ExampleMiddlewareB::class, ExampleMiddlewareC::class],
         );
