@@ -31,10 +31,10 @@ class BodyParserMiddleware implements MiddlewareInterface
      */
     private static function parseBody(ServerRequestInterface $request): null|array|object
     {
-        switch (\strtoupper($request->getMethod())) {
+        switch ($request->getMethod()) {
+            case 'PATCH':
             case 'POST':
             case 'PUT':
-            case 'PATCH':
             case 'DELETE':
                 if (Request::containsJson($request)) {
                     try {
@@ -45,7 +45,8 @@ class BodyParserMiddleware implements MiddlewareInterface
                     }
                 }
                 return $request->getParsedBody();
+            default:
+                return null;
         }
-        return null;
     }
 }

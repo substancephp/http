@@ -27,9 +27,7 @@ class Emitter implements EmitterInterface
         $this->stack->push($conditionalEmitter);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     #[\Override] public function emit(ResponseInterface $response): bool
     {
         return $this->stack->emit($response);

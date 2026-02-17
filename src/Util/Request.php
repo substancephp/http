@@ -13,10 +13,4 @@ final class Request
         $contentType = $request->getHeaderLine('Content-Type');
         return \strlen($contentType) != 0 && \str_contains($contentType, 'application/json');
     }
-
-    public static function acceptsJson(ServerRequestInterface $request): bool
-    {
-        $accepts = $request->getHeaderLine('Accept');
-        return \strlen($accepts) == 0 || \str_contains($accepts, 'application/json');
-    }
 }

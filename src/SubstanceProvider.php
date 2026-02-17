@@ -8,7 +8,9 @@ use Laminas\Diactoros\ResponseFactory;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Log\LoggerInterface;
+use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\Middleware\BodyParserMiddleware;
+use SubstancePHP\HTTP\Middleware\MethodNormalizerMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteMatcherMiddleware;
 
@@ -33,15 +35,20 @@ abstract class SubstanceProvider implements ProviderInterface
                 $c->has(LoggerInterface::class) ? $c->get(LoggerInterface::class) : null,
             ),
             ResponseFactoryInterface::class => fn ($c) => new ResponseFactory(),
+            RendererFactoryInterface::class => fn ($c) => new RendererFactory(
+                $c->get('substance.template-root'),
+            ),
 
             // middleware
             BodyParserMiddleware::class => fn () => new BodyParserMiddleware(),
+            MethodNormalizerMiddleware::class => fn () => new MethodNormalizerMiddleware(),
             RouteActorMiddleware::class => fn ($c) => new RouteActorMiddleware(
                 $c,
                 $c->get(ContextFactoryInterface::class),
                 $c->get(ResponseFactoryInterface::class),
+                $c->get(RendererFactoryInterface::class),
             ),
-            RouteMatcherMiddleware::class => fn ($c) => new RouteMatcherMiddleware($c->get('substance.action-root')),
+            RouteMatcherMiddleware::class => Container::autowire(...),
         ];
     }
 }
