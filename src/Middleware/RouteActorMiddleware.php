@@ -59,7 +59,7 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
         }
 
         $response = $this->responseFactory->createResponse($statusCode)->withHeader('Content-Type', $contentType);
-        $renderer = $this->rendererFactory->createRenderer($request->getUri()->getPath(), $contentType, $responseData);
+        $renderer = $this->rendererFactory->createRenderer($route->normalizedPath, $contentType, $responseData);
         $responseContent = $renderer->render();
         $response->getBody()->write($responseContent);
         return $response;

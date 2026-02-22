@@ -182,7 +182,7 @@ class RequestHandlerTest extends TestCase
         $requestAttributes = $response->getHeader('X-Request-Attributes');
         $this->assertCount(1, $requestAttributes);
         $expected = '{' .
-            '"SubstancePHP\\\\HTTP\\\\Route":{},' .
+            '"SubstancePHP\\\\HTTP\\\\Route":{"normalizedPath":"dummy"},' .
             '"middleware B called":true,' .
             '"attribute gathering middleware called":true' .
             '}';

@@ -27,12 +27,15 @@ class Route
 {
     private \Closure $callback;
 
+    public readonly string $normalizedPath;
+
     /** @var string[] fully-qualified names of PSR-15 middleware classes that should be skipped by this route */
     private ?array $skippableMiddlewares;
 
-    private function __construct(callable $callback)
+    private function __construct(callable $callback, string $normalizedPath)
     {
         $this->callback = $callback(...);
+        $this->normalizedPath = $normalizedPath;
         $this->skippableMiddlewares = null;
     }
 
@@ -47,8 +50,8 @@ class Route
     public static function from(string $actionRoot, string $method, string $path): ?self
     {
         $lowerMethod = \strtolower($method);
-        $trimmedPath = \trim($path, '/') ?: '_root';
-        $actionPath = "$actionRoot/$trimmedPath.$lowerMethod.php";
+        $normalizedPath = \trim($path, '/') ?: '_root';
+        $actionPath = "$actionRoot/$normalizedPath.$lowerMethod.php";
         if (! \file_exists($actionPath)) {
             return null;
         }
@@ -56,7 +59,7 @@ class Route
         if (! \is_callable($content)) {
             return null;
         }
-        return new self($content);
+        return new self($content, $normalizedPath);
     }
 
     /**
