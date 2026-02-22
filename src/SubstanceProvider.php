@@ -45,8 +45,8 @@ abstract class SubstanceProvider implements ProviderInterface
             RouteActorMiddleware::class => fn ($c) => new RouteActorMiddleware(
                 $c,
                 $c->get(ContextFactoryInterface::class),
-                $c->get(ResponseFactoryInterface::class),
                 $c->get(RendererFactoryInterface::class),
+                $c->get(ResponseFactoryInterface::class),
             ),
             RouteMatcherMiddleware::class => Container::autowire(...),
         ];
