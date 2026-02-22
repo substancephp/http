@@ -47,7 +47,8 @@ class Route
     public static function from(string $actionRoot, string $method, string $path): ?self
     {
         $lowerMethod = \strtolower($method);
-        $actionPath = "$actionRoot/$path.$lowerMethod.php";
+        $trimmedPath = \trim($path, '/') ?: '_root';
+        $actionPath = "$actionRoot/$trimmedPath.$lowerMethod.php";
         if (! \file_exists($actionPath)) {
             return null;
         }
