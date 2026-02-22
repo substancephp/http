@@ -31,9 +31,9 @@ class RouteActorMiddlewareTest extends TestCase
     private function makeInstance(): RouteActorMiddleware
     {
         $container = $this->createMock(ContainerInterface::class);
-        $contextFactory = $this->createMock(ContextFactoryInterface::class);
+        $contextFactory = $this->createStub(ContextFactoryInterface::class);
         $context = Container::from([Respond::class => fn () => new Respond(200, 'application/json')]);
-        $contextFactory->expects($this->any())->method('createContext')->willReturn($context);
+        $contextFactory->method('createContext')->willReturn($context);
         $responseFactory = new ResponseFactory();
         $templateRoot = \implode(DIRECTORY_SEPARATOR, [\dirname(__DIR__, 2), 'testutil', 'fixture', 'template']);
         $rendererFactory = new RendererFactory($templateRoot);

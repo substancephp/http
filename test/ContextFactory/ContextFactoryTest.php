@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\ContextFactory;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
@@ -26,9 +25,10 @@ class ContextFactoryTest extends TestCase
     #[Test]
     public function createContext(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
-        $container->expects($this->any())->method('get')->with('something')->willReturn('dummy-value');
-        $container->expects($this->any())->method('has')->with('something')->willReturn(true);
+        $container = Container::from([
+            'substance.http.default-content-type' => fn () => 'application/json',
+        ]);
+
         $requestFactory = new ServerRequestFactory();
         $request = $requestFactory->createServerRequest('GET', 'http://example.com/', ['var' => 'val'])
             ->withParsedBody(['hi' => 'there'])
@@ -37,7 +37,6 @@ class ContextFactoryTest extends TestCase
         $contextFactory = new ContextFactory();
 
         $context = $contextFactory->createContext($container, $request);
-        $this->assertInstanceOf(Container::class, $context);
 
         $this->assertInstanceOf(QueryParams::class, $context->get(QueryParams::class));
         $this->assertInstanceOf(ServerParams::class, $context->get(ServerParams::class));
@@ -48,6 +47,6 @@ class ContextFactoryTest extends TestCase
         $this->assertSame('there', $context->get(BodyParams::class)['hi']);
         $this->assertSame('bar', $context->get(QueryParams::class)['foo']);
 
-        $this->assertSame('dummy-value', $context->get('something'));
+        $this->assertSame('application/json', $context->get('substance.http.default-content-type'));
     }
 }

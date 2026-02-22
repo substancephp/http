@@ -17,7 +17,7 @@ class RendererFactory implements RendererFactoryInterface
 
     #[\Override]
     public function createRenderer(
-        string $requestPath,
+        string $normalizedRequestPath,
         string $responseContentType,
         mixed $responseData,
     ): RendererInterface {
@@ -25,7 +25,7 @@ class RendererFactory implements RendererFactoryInterface
             return new JsonRenderer($responseData);
         }
         if (\str_starts_with($responseContentType, 'text/html')) {
-            $templatePath = "{$this->templateRoot}{$requestPath}.html.php";
+            $templatePath = "{$this->templateRoot}/{$normalizedRequestPath}.html.php";
             return new HtmlRenderer($templatePath, $responseData);
         }
         return new EmptyRenderer();
