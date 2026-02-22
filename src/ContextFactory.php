@@ -29,7 +29,7 @@ class ContextFactory implements ContextFactoryInterface
             ServerParams::class => fn () => ServerParams::fromRequest($request),
             Respond::class => fn ($c) => new Respond(
                 statusCode: $request->getMethod() === 'POST' ? 201 : 200,
-                contentType: 'application/json',
+                contentType: $c->get('substance.http.default-content-type'),
             ),
         ];
     }
