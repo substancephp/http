@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### v0.2.0
+
+Major:
+* Handle HTML, not just JSON
+
 ### v0.1.0
 
 Major:
