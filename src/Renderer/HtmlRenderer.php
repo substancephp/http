@@ -33,11 +33,7 @@ class HtmlRenderer implements RendererInterface
                 throw new \Exception('Invalid template data');
             }
             require $this->templatePath;
-            $result = \ob_get_contents();
-            if ($result === false) {
-                throw new \Exception('Output buffering inactive');
-            }
-            return $result;
+            return \ob_get_contents(); // known to be string since buffering active
         } finally {
             \ob_end_clean();
         }
