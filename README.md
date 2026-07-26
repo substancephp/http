@@ -4,9 +4,17 @@
 
 ## Overview
 
-`substancephp/http` is an opinionated library for building JSON REST APIs.
+`substancephp/http` is a simple library for building web applications in PHP. It
+supports rendering both JSON and HTML.
 
-This is a work in progress and is not ready for use. There are regularly breaking changes from
+Philosophy:
+* PSR standards ✔
+* IoC ✔
+* Modern PHP ✔
+* Controller classes ✗
+* One file per endpoint ✔
+
+This is a work in progress and is not ready for general use. There are regularly breaking changes from
 version to version.
 
 ## Installation
