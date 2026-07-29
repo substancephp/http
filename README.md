@@ -12,7 +12,7 @@ Philosophy:
 * IoC ✔
 * Modern PHP ✔
 * Controller classes ✗
-* One file per endpoint ✔
+* Filepath based routing ✔
 
 This is a work in progress and is not ready for general use. There are regularly breaking changes from
 version to version.
