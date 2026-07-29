@@ -8,11 +8,11 @@
 supports rendering both JSON and HTML.
 
 Philosophy:
-* PSR standards ✔
-* IoC ✔
-* Modern PHP ✔
-* Controller classes ✗
-* Filepath based routing ✔
+* PSR standards **✓**
+* IoC **✓**
+* Modern PHP **✓**
+* Controller classes **✗**
+* Filepath based routing **✓**
 
 This is a work in progress and is not ready for general use. There are regularly breaking changes from
 version to version.
