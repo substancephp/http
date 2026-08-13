@@ -17,7 +17,7 @@ class HtmlRenderer implements RendererInterface
 
     public function e(mixed $content): mixed
     {
-        return \htmlspecialchars((string) $content, \ENT_QUOTES, 'UTF-8');
+        return \htmlspecialchars((string) $content, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
     }
 
     /** @throws \Exception */

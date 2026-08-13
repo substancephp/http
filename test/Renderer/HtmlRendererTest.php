@@ -31,27 +31,62 @@ class HtmlRendererTest extends TestCase
     #[TestWith([
         '/dummy-vars.php',
         [
-            'word' => 'world',
+            'wordA' => 'world',
             'count' => 9,
-            'tag' => '<b>bolded</b>',
+            'wordB' => '<b>bolded</b>',
+            'wordC' => 'hi',
         ],
         <<<HTML
-        
+
         <html lang="en">
-        <head><title>Hi</title></head>
-        <body>
-            <p>Hello, world</p>
-            <p>Count is 9</p>
-            <p>Unescaped: <b>bolded</b></p>
-            <p>Escaped: &lt;b&gt;bolded&lt;/b&gt;</p>
-        </body>
+            <head>
+            <meta charset="utf8">
+            <title>Hi</title>
+            </head>
+            <body>
+                <p>Hello, world</p>
+                <p>Count is 9</p>
+                <p>Unescaped A: <b>bolded</b></p>
+                <p>Escaped A: &lt;b&gt;bolded&lt;/b&gt;</p>
+                <p>Escaped B: hi</p>
+            </body>
         </html>
         HTML,
     ])]
-    public function render(string $template, mixed $data, string $expectedOutput): void
+    public function renderHappyPath(string $template, mixed $data, string $expectedOutput): void
     {
         $templatePath = TestUtil::getFixtureRoot() . '/template' . $template;
         $renderer = new HtmlRenderer($templatePath, $data);
-        $this->assertSame($expectedOutput, $renderer->render());
+        $this->assertSame(\trim($expectedOutput), \trim($renderer->render()));
+    }
+
+    #[Test]
+    public function renderInvalidUnicode(): void
+    {
+        $template = '/dummy-vars.php';
+        $data = [
+            'wordA' => 'world',
+            'count' => 9,
+            'wordB' => '<b>bolded</b>',
+            'wordC' => \chr(0xff),
+        ];
+        $templatePath = TestUtil::getFixtureRoot() . '/template' . $template;
+        $expectedOutput = <<<HTML
+        <html lang="en">
+            <head>
+            <meta charset="utf8">
+            <title>Hi</title>
+            </head>
+            <body>
+                <p>Hello, world</p>
+                <p>Count is 9</p>
+                <p>Unescaped A: <b>bolded</b></p>
+                <p>Escaped A: &lt;b&gt;bolded&lt;/b&gt;</p>
+                <p>Escaped B: �</p>
+            </body>
+        </html>
+        HTML;
+        $renderer = new HtmlRenderer($templatePath, $data);
+        $this->assertSame(\trim($expectedOutput), \trim($renderer->render()));
     }
 }
