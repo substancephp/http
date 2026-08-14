@@ -1,5 +1,6 @@
 /vendor/
 .idea
 .phpunit.cache
+.php-cs-fixer.cache
 html-coverage
 composer.lock
