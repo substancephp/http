@@ -26,12 +26,10 @@ class ConditionalEmitterTest extends TestCase
     #[TestWith([true, true, true])]
     public function emit(bool $hasDisposition, bool $hasRange, bool $expectEmit): void
     {
-        $emitter = new class implements EmitterInterface {
+        $emitter = new class () implements EmitterInterface {
             public bool $emitted = false;
 
-            /**
-             * @inheritDoc
-             */
+            /** @inheritDoc */
             #[\Override] public function emit(ResponseInterface $response): bool
             {
                 return ($this->emitted = true);

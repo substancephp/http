@@ -34,7 +34,7 @@ class BodyParserMiddlewareTest extends TestCase
 
         $requestFactory = new ServerRequestFactory();
 
-        $requestHandler = new class implements RequestHandlerInterface {
+        $requestHandler = new class () implements RequestHandlerInterface {
             /** @var array<mixed>|object|null  */
             public array|null|object $parsedBody = null;
 

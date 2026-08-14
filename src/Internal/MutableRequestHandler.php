@@ -23,7 +23,7 @@ class MutableRequestHandler implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $route = $request->getAttribute(Route::class);
-        if (!($route instanceof Route)) {
+        if (! ($route instanceof Route)) {
             $route = null;
         }
         do {

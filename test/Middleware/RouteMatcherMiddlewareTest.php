@@ -37,7 +37,7 @@ class RouteMatcherMiddlewareTest extends TestCase
         # setup
         $requestFactory = new ServerRequestFactory();
 
-        $requestHandler = new class implements RequestHandlerInterface {
+        $requestHandler = new class () implements RequestHandlerInterface {
             public function __construct(public ?Route $route = null)
             {
             }

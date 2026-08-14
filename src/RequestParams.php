@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace SubstancePHP\HTTP;
 
-/**
- * @template-extends \ArrayObject<string, mixed>
- */
+/** @template-extends \ArrayObject<string, mixed> */
 abstract class RequestParams extends \ArrayObject
 {
     /** @param array<string, mixed> $array */

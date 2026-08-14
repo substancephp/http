@@ -7,15 +7,12 @@ namespace SubstancePHP\HTTP\Exception\BaseException;
 use SubstancePHP\HTTP\Exception\BaseException;
 use Throwable;
 
-/**
- * Intended to be converted by an exception handler into a user-facing error message.
- */
+/** Intended to be converted by an exception handler into a user-facing error message. */
 class UserError extends BaseException
 {
     private readonly int $statusCode;
 
-    /** In most cases, the {@see self::throw} method should be preferred to using the constructor directly.
-     */
+    /** In most cases, the {@see self::throw} method should be preferred to using the constructor directly. */
     public function __construct(int $statusCode, string $message, ?Throwable $previous = null)
     {
         parent::__construct($message, 0, $previous);

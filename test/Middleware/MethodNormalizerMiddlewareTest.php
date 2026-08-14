@@ -26,7 +26,7 @@ class MethodNormalizerMiddlewareTest extends TestCase
 
         $requestFactory = new ServerRequestFactory();
 
-        $requestHandler = new class implements RequestHandlerInterface {
+        $requestHandler = new class () implements RequestHandlerInterface {
             public ?string $method = null;
 
             public function handle(ServerRequestInterface $request): ResponseInterface

@@ -14,9 +14,7 @@ use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 
 class ApplicationProvider implements ProviderInterface
 {
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     #[\Override]
     public static function factories(EnvironmentInterface $environment): array
     {

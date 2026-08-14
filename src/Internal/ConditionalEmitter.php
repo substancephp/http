@@ -9,9 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 
 // See https://docs.laminas.dev/laminas-httphandlerrunner/emitters/
 
-/**
- * @internal
- */
+/** @internal */
 readonly class ConditionalEmitter implements EmitterInterface
 {
     public function __construct(private EmitterInterface $emitter)

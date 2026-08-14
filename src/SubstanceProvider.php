@@ -14,9 +14,7 @@ use SubstancePHP\HTTP\Middleware\MethodNormalizerMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteMatcherMiddleware;
 
-/**
- * A provider for dependencies common to all SubstancePHP\HTTP applications.
- */
+/** A provider for dependencies common to all SubstancePHP\HTTP applications. */
 abstract class SubstanceProvider implements ProviderInterface
 {
     #[\Override]

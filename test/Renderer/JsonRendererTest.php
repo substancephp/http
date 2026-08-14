@@ -18,10 +18,10 @@ class JsonRendererTest extends TestCase
     #[Test]
     #[TestWith([[], '[]'])]
     #[TestWith([new \stdClass(), '{}'])]
-    #[TestWith([['items' => []],'{"items":[]}'])]
-    #[TestWith([['items' => ['hello', 'world']],'{"items":["hello","world"]}'])]
-    #[TestWith([['items' => 3],'{"items":3}'])]
-    #[TestWith([90,'90'])]
+    #[TestWith([['items' => []], '{"items":[]}'])]
+    #[TestWith([['items' => ['hello', 'world']], '{"items":["hello","world"]}'])]
+    #[TestWith([['items' => 3], '{"items":3}'])]
+    #[TestWith([90, '90'])]
     public function render(mixed $data, string $expectedOutput): void
     {
         $instance = new JsonRenderer($data);
