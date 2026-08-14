@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace SubstancePHP\HTTP;
 
+use Laminas\Escaper\Escaper;
 use SubstancePHP\HTTP\Renderer\EmptyRenderer;
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 use SubstancePHP\HTTP\Renderer\JsonRenderer;
 
 class RendererFactory implements RendererFactoryInterface
 {
+    /** @param non-empty-string $htmlEncoding */
     public function __construct(
         private string $templateRoot,
+        private string $htmlEncoding,
     ) {
     }
 
@@ -26,7 +29,8 @@ class RendererFactory implements RendererFactoryInterface
         }
         if (\str_starts_with($responseContentType, 'text/html')) {
             $templatePath = "{$this->templateRoot}/{$normalizedRequestPath}.html.php";
-            return new HtmlRenderer($templatePath, $responseData);
+            $escaper = new Escaper($this->htmlEncoding);
+            return new HtmlRenderer($templatePath, $responseData, $escaper);
         }
         return new EmptyRenderer();
     }

@@ -31,6 +31,7 @@ class Application implements ContainerInterface
         string $templateRoot,
         array $providers,
         array $middlewares,
+        string $htmlEncoding,
     ): self {
         // TODO Consider specialising application constructors for JSON-only or HTML-only.
         $environment = new Environment($env);
@@ -38,6 +39,7 @@ class Application implements ContainerInterface
         $factories = \array_merge(...$factorySets);
         $factories['substance.action-root'] = fn () => $actionRoot;
         $factories['substance.template-root'] = fn () => $templateRoot;
+        $factories['substance.html-encoding'] = fn () => $htmlEncoding;
         $container = Container::from($factories);
 
         $handler = RequestHandler::from(\array_map($container->get(...), $middlewares));

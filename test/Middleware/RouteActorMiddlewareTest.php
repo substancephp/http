@@ -36,7 +36,7 @@ class RouteActorMiddlewareTest extends TestCase
         $contextFactory->method('createContext')->willReturn($context);
         $responseFactory = new ResponseFactory();
         $templateRoot = \implode(DIRECTORY_SEPARATOR, [\dirname(__DIR__, 2), 'testutil', 'fixture', 'template']);
-        $rendererFactory = new RendererFactory($templateRoot);
+        $rendererFactory = new RendererFactory($templateRoot, 'utf-8');
         return new RouteActorMiddleware($container, $contextFactory, $rendererFactory, $responseFactory);
     }
 
