@@ -43,6 +43,7 @@ class ApplicationTest extends TestCase
                 ExampleMiddlewareC::class,
                 AttributeGatheringMiddleware::class,
             ],
+            htmlEncoding: 'utf-8',
         );
         $this->assertTrue($instance->has(ExampleMiddlewareA::class));
         $this->assertTrue($instance->has('foob.ar'));
@@ -71,6 +72,7 @@ class ApplicationTest extends TestCase
             templateRoot: $templateRoot,
             providers: [ApplicationProvider::class],
             middlewares: [ExampleMiddlewareA::class, ExampleMiddlewareB::class, ExampleMiddlewareC::class],
+            htmlEncoding: 'utf-8',
         );
     }
 }

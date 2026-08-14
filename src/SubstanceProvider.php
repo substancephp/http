@@ -34,7 +34,8 @@ abstract class SubstanceProvider implements ProviderInterface
             ),
             ResponseFactoryInterface::class => fn ($c) => new ResponseFactory(),
             RendererFactoryInterface::class => fn ($c) => new RendererFactory(
-                $c->get('substance.template-root'),
+                templateRoot: $c->get('substance.template-root'),
+                htmlEncoding: $c->get('substance.html-encoding'),
             ),
 
             // middleware
