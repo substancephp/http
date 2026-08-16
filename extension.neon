@@ -1,0 +1,32 @@
+# PHPStan extension for substancephp/http
+#
+# Include this file from your project's phpstan.neon to make PHPStan flag
+# unescaped (XSS-prone) output in your HTML templates:
+#
+#   includes:
+#       - vendor/substancephp/http/extension.neon
+#
+# If you use phpstan/extension-installer, the extension is registered
+# automatically and you do not need the includes entry.
+#
+# This file only registers rules; it does not change the analysis level,
+# paths or any other PHPStan settings. See docs/static-analysis.md for what
+# the rules report and how to deliberately opt out of escaping.
+
+services:
+    -
+        class: SubstancePHP\HTTP\PHPStan\UnescapedOutputRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: SubstancePHP\HTTP\PHPStan\UnescapedPrintRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: SubstancePHP\HTTP\PHPStan\UnescapedExitRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: SubstancePHP\HTTP\PHPStan\UnescapedOutputFuncCallRule
+        tags:
+            - phpstan.rules.rule
