@@ -20,11 +20,12 @@ class UserError extends BaseException
     }
 
     /**
-     * @param int $statusCode typically this should be passed one of the standard HTTP status codes; however this
-     *   is not strictly necessary. You may pass a non-standard status code together with a message of your choosing.
-     * @param ?string $message with which to initialize the exception. If this is omitted or passed null, and the
-     *   passed statusCode is a standard HTTP status code, then the exception will be initialized with a message
-     *   derived from the standard error phrase for that HTTP status code.
+     * @param int $statusCode typically this should be passed one of the standard HTTP status codes; however
+     *   this is not strictly necessary. You may pass a non-standard status code together with a message
+     *   of your choosing.
+     * @param ?string $message with which to initialize the exception. If this is omitted or passed null, and
+     *   the passed statusCode is a standard HTTP status code, then the exception will be initialized with a
+     *   message derived from the standard error phrase for that HTTP status code.
      * @throws self
      */
     public static function throw(int $statusCode, ?string $message = null): never

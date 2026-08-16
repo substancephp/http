@@ -21,18 +21,22 @@ final class UnescapedOutputFuncCallRuleTest extends RuleTestCase
     #[Test]
     public function flagsUnescapedOutputFunctionCallsInHtmlTemplates(): void
     {
+        $expectedMessage = 'Output is not escaped, which risks XSS. Escape it with $this->h() or '
+            . '$this->escapeHtml() (or another escape method), or mark it as intentionally '
+            . 'unescaped with $this->raw().';
+
         $this->analyse([__DIR__ . '/data/unescaped-func-call.php'], [
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 12],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 14],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 16],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 18],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 19],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 22],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 23],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 24],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 26],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 28],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 29],
+            [$expectedMessage, 12],
+            [$expectedMessage, 14],
+            [$expectedMessage, 16],
+            [$expectedMessage, 18],
+            [$expectedMessage, 19],
+            [$expectedMessage, 22],
+            [$expectedMessage, 23],
+            [$expectedMessage, 24],
+            [$expectedMessage, 26],
+            [$expectedMessage, 28],
+            [$expectedMessage, 29],
         ]);
     }
 }

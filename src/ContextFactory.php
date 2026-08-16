@@ -13,8 +13,10 @@ use SubstancePHP\HTTP\RequestParams\ServerParams;
 
 class ContextFactory implements ContextFactoryInterface
 {
-    final public function createContext(ContainerInterface $container, ServerRequestInterface $request): Container
-    {
+    final public function createContext(
+        ContainerInterface $container,
+        ServerRequestInterface $request,
+    ): Container {
         $factories = $this->createFactories($request);
         return Container::extend($container, $factories);
     }

@@ -11,8 +11,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 readonly class ExampleMiddlewareA implements MiddlewareInterface
 {
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-    {
+    public function process(
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler,
+    ): ResponseInterface {
         return $handler->handle($request->withAttribute('middleware A called', true));
     }
 }

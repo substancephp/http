@@ -24,8 +24,10 @@ readonly class RouteMatcherMiddleware implements MiddlewareInterface
      * @throws UserError
      * @throws \Exception
      */
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-    {
+    public function process(
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler,
+    ): ResponseInterface {
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
         $route = Route::from($this->actionRoot, $method, $path) ?? UserError::throw(404);

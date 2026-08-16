@@ -35,7 +35,12 @@ class RouteActorMiddlewareTest extends TestCase
         $context = Container::from([Respond::class => fn () => new Respond(200, 'application/json')]);
         $contextFactory->method('createContext')->willReturn($context);
         $responseFactory = new ResponseFactory();
-        $templateRoot = \implode(DIRECTORY_SEPARATOR, [\dirname(__DIR__, 2), 'testutil', 'fixture', 'template']);
+        $templateRoot = \implode(DIRECTORY_SEPARATOR, [
+            \dirname(__DIR__, 2),
+            'testutil',
+            'fixture',
+            'template',
+        ]);
         $rendererFactory = new RendererFactory($templateRoot, 'utf-8');
         return new RouteActorMiddleware($container, $contextFactory, $rendererFactory, $responseFactory);
     }
@@ -54,7 +59,11 @@ class RouteActorMiddlewareTest extends TestCase
         $requestHandler = $this->createMock(RequestHandler::class);
         $instance = $this->makeInstance();
 
-        $route = Route::from(actionRoot: TestUtil::getActionFixtureRoot(), method: 'PATCH', path: '/inner/another');
+        $route = Route::from(
+            actionRoot: TestUtil::getActionFixtureRoot(),
+            method: 'PATCH',
+            path: '/inner/another',
+        );
 
         $request = $requestFactory
             ->createServerRequest('PATCH', '/inner/another')
