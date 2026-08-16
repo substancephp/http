@@ -4,7 +4,23 @@ declare(strict_types=1);
 
 namespace SubstancePHP\HTTP\PHPStan;
 
-use PhpParser\Node;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\BinaryOp\Coalesce;
+use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\Ternary;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\DNumber;
+use PhpParser\Node\Scalar\InterpolatedString;
+use PhpParser\Node\Scalar\LNumber;
+use PhpParser\Node\Scalar\MagicConst;
+use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\RuleErrorBuilder;
@@ -73,7 +89,7 @@ final class UnescapedOutputChecker
     private const UNSAFE = 'unsafe';
 
     /**
-     * @param array<Node\Expr> $exprs
+     * @param array<Expr> $exprs
      * @return list<IdentifierRuleError>
      */
     public function checkExpressions(array $exprs, Scope $scope): array
@@ -99,7 +115,7 @@ final class UnescapedOutputChecker
 
     private function isHtmlTemplate(Scope $scope): bool
     {
-        return $this->isRendererObject($scope->getType(new Node\Expr\Variable('this')));
+        return $this->isRendererObject($scope->getType(new Variable('this')));
     }
 
     private function isRendererObject(Type $type): bool
@@ -107,31 +123,31 @@ final class UnescapedOutputChecker
         return (new ObjectType(HtmlRenderer::class))->isSuperTypeOf($type)->yes();
     }
 
-    private function classify(Node\Expr $expr, Scope $scope): string
+    private function classify(Expr $expr, Scope $scope): string
     {
-        if ($expr instanceof Node\Scalar\String_
-            || $expr instanceof Node\Scalar\LNumber
-            || $expr instanceof Node\Scalar\DNumber
-            || $expr instanceof Node\Scalar\MagicConst
+        if ($expr instanceof String_
+            || $expr instanceof LNumber
+            || $expr instanceof DNumber
+            || $expr instanceof MagicConst
         ) {
             return self::SAFE;
         }
 
-        if ($expr instanceof Node\Expr\ConstFetch) {
+        if ($expr instanceof ConstFetch) {
             $name = \strtolower($expr->name->toString());
             if ($name === 'true' || $name === 'false' || $name === 'null') {
                 return self::SAFE;
             }
         }
 
-        if ($expr instanceof Node\Expr\BinaryOp\Concat) {
+        if ($expr instanceof Concat) {
             return $this->combine(
                 $this->classify($expr->left, $scope),
                 $this->classify($expr->right, $scope),
             );
         }
 
-        if ($expr instanceof Node\Expr\Ternary) {
+        if ($expr instanceof Ternary) {
             $if = $expr->if ?? $expr->cond;
             return $this->combine(
                 $this->classify($if, $scope),
@@ -139,17 +155,17 @@ final class UnescapedOutputChecker
             );
         }
 
-        if ($expr instanceof Node\Expr\BinaryOp\Coalesce) {
+        if ($expr instanceof Coalesce) {
             return $this->combine(
                 $this->classify($expr->left, $scope),
                 $this->classify($expr->right, $scope),
             );
         }
 
-        if ($expr instanceof Node\Scalar\InterpolatedString) {
+        if ($expr instanceof InterpolatedString) {
             $result = self::SAFE;
             foreach ($expr->parts as $part) {
-                if (! $part instanceof Node\Expr) {
+                if (! $part instanceof Expr) {
                     continue;
                 }
                 $verdict = $this->classify($part, $scope);
@@ -164,11 +180,11 @@ final class UnescapedOutputChecker
             return $result;
         }
 
-        if ($expr instanceof Node\Expr\MethodCall) {
+        if ($expr instanceof MethodCall) {
             return $this->classifyMethodCall($expr, $scope);
         }
 
-        if ($expr instanceof Node\Expr\FuncCall) {
+        if ($expr instanceof FuncCall) {
             return $this->classifyFuncCall($expr, $scope);
         }
 
@@ -182,12 +198,12 @@ final class UnescapedOutputChecker
         return self::UNSAFE;
     }
 
-    private function classifyMethodCall(Node\Expr\MethodCall $call, Scope $scope): string
+    private function classifyMethodCall(MethodCall $call, Scope $scope): string
     {
         if (! $this->isRendererObject($scope->getType($call->var))) {
             return self::UNSAFE;
         }
-        if (! $call->name instanceof Node\Identifier) {
+        if (! $call->name instanceof Identifier) {
             return self::UNSAFE;
         }
         $name = \strtolower($call->name->toString());
@@ -201,9 +217,9 @@ final class UnescapedOutputChecker
         return self::UNSAFE;
     }
 
-    private function classifyFuncCall(Node\Expr\FuncCall $call, Scope $scope): string
+    private function classifyFuncCall(FuncCall $call, Scope $scope): string
     {
-        if (! $call->name instanceof Node\Name) {
+        if (! $call->name instanceof Name) {
             return self::UNSAFE;
         }
         $name = \strtolower($call->name->toString());
@@ -217,14 +233,14 @@ final class UnescapedOutputChecker
         return self::UNSAFE;
     }
 
-    private function classifyPrintfCall(Node\Expr\FuncCall $call, string $name, Scope $scope): string
+    private function classifyPrintfCall(FuncCall $call, string $name, Scope $scope): string
     {
         $args = $call->args;
         if ($args === []) {
             // No format string to inspect.
             return self::UNSAFE;
         }
-        if (! $args[0] instanceof Node\Arg || $this->classify($args[0]->value, $scope) !== self::SAFE) {
+        if (! $args[0] instanceof Arg || $this->classify($args[0]->value, $scope) !== self::SAFE) {
             // Format string is not a constant; the output cannot be checked.
             return self::UNSAFE;
         }
@@ -236,7 +252,7 @@ final class UnescapedOutputChecker
         }
 
         if ($name === 'vprintf') {
-            if (! $rest[0] instanceof Node\Arg) {
+            if (! $rest[0] instanceof Arg) {
                 return self::UNSAFE;
             }
 
@@ -245,7 +261,7 @@ final class UnescapedOutputChecker
 
         $result = self::SAFE;
         foreach ($rest as $arg) {
-            if (! $arg instanceof Node\Arg) {
+            if (! $arg instanceof Arg) {
                 return self::UNSAFE;
             }
             $verdict = $this->classify($arg->value, $scope);
@@ -260,10 +276,10 @@ final class UnescapedOutputChecker
         return $result;
     }
 
-    private function classifyVprintfArgs(Node\Arg $arg, Scope $scope): string
+    private function classifyVprintfArgs(Arg $arg, Scope $scope): string
     {
         $value = $arg->value;
-        if (! $value instanceof Node\Expr\Array_) {
+        if (! $value instanceof Array_) {
             return self::UNSAFE;
         }
 

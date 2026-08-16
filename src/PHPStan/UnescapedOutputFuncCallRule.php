@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace SubstancePHP\HTTP\PHPStan;
 
 use PhpParser\Node;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Name;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
 use PHPStan\Type\Type;
@@ -22,23 +25,23 @@ use PHPStan\Type\Type;
  * `call_user_func`/`call_user_func_array` with such a first argument);
  * otherwise the call is skipped.
  *
- * @implements Rule<Node\Expr\FuncCall>
+ * @implements Rule<FuncCall>
  */
 final class UnescapedOutputFuncCallRule implements Rule
 {
     #[\Override]
-    /** @return class-string<Node\Expr\FuncCall> */
+    /** @return class-string<FuncCall> */
     public function getNodeType(): string
     {
-        return Node\Expr\FuncCall::class;
+        return FuncCall::class;
     }
 
     #[\Override]
-    /** @param Node\Expr\FuncCall $node */
+    /** @param FuncCall $node */
     public function processNode(Node $node, Scope $scope): array
     {
         $checker = new UnescapedOutputChecker();
-        if (! $node->name instanceof Node\Name) {
+        if (! $node->name instanceof Name) {
             if ($this->isOutputFunctionName($scope->getType($node->name))) {
                 return $checker->checkExpressions([$node], $scope);
             }
@@ -55,7 +58,7 @@ final class UnescapedOutputFuncCallRule implements Rule
             case 'print_r':
                 // print_r($x, true) returns a string instead of printing it.
                 $secondArg = $node->args[1] ?? null;
-                if ($secondArg instanceof Node\Arg && $scope->getType($secondArg->value)->isTrue()->yes()) {
+                if ($secondArg instanceof Arg && $scope->getType($secondArg->value)->isTrue()->yes()) {
                     return [];
                 }
 
@@ -64,7 +67,7 @@ final class UnescapedOutputFuncCallRule implements Rule
             case 'call_user_func_array':
                 $firstArg = $node->args[0] ?? null;
                 if (
-                    $firstArg instanceof Node\Arg
+                    $firstArg instanceof Arg
                     && $this->isOutputFunctionName($scope->getType($firstArg->value))
                 ) {
                     return $checker->checkExpressions([$node], $scope);
