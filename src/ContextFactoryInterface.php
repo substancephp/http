@@ -9,9 +9,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use SubstancePHP\Container\Container;
 
 /**
- * A "context" is a {@see Container} for one-off use in handling a single request. By implementing this interface,
- * you provide a means for a {@see Container} to be created for the purpose of providing dependencies for handling
- * a given request.
+ * A "context" is a {@see Container} for one-off use in handling a single request. By implementing this
+ * interface, you provide a means for a {@see Container} to be created for the purpose of providing
+ * dependencies for handling a given request.
  */
 interface ContextFactoryInterface
 {

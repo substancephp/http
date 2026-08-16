@@ -28,7 +28,9 @@ class BodyParamsTest extends TestCase
         $this->assertSame('there', $bodyParams['hello']);
         $this->assertTrue($bodyParams->offsetExists('hello'));
 
-        $request = $requestFactory->createServerRequest('GET', '/')->withParsedBody((object) ['hello' => [1, 2, 30]]);
+        $request = $requestFactory
+            ->createServerRequest('GET', '/')
+            ->withParsedBody((object) ['hello' => [1, 2, 30]]);
         $bodyParams = BodyParams::fromRequest($request);
         $this->assertSame([1, 2, 30], $bodyParams['hello']);
     }

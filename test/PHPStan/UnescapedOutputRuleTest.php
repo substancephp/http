@@ -21,12 +21,16 @@ final class UnescapedOutputRuleTest extends RuleTestCase
     #[Test]
     public function flagsUnescapedOutputInHtmlTemplates(): void
     {
+        $expectedMessage = 'Output is not escaped, which risks XSS. Escape it with $this->h() or '
+            . '$this->escapeHtml() (or another escape method), or mark it as intentionally '
+            . 'unescaped with $this->raw().';
+
         $this->analyse([__DIR__ . '/data/unescaped-output.php'], [
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 18],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 20],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 23],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 27],
-            ['Output is not escaped, which risks XSS. Escape it with $this->h() or $this->escapeHtml() (or another escape method), or mark it as intentionally unescaped with $this->raw().', 28],
+            [$expectedMessage, 18],
+            [$expectedMessage, 20],
+            [$expectedMessage, 23],
+            [$expectedMessage, 27],
+            [$expectedMessage, 28],
         ]);
     }
 

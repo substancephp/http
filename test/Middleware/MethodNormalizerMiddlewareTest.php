@@ -61,15 +61,21 @@ class MethodNormalizerMiddlewareTest extends TestCase
         $instance->process($request, $requestHandler);
         $this->assertSame('POST', $requestHandler->method);
 
-        $request = $requestFactory->createServerRequest('POST', '/')->withHeader('x-http-method-override', 'PATCH');
+        $request = $requestFactory
+            ->createServerRequest('POST', '/')
+            ->withHeader('x-http-method-override', 'PATCH');
         $instance->process($request, $requestHandler);
         $this->assertSame('PATCH', $requestHandler->method);
 
-        $request = $requestFactory->createServerRequest('POST', '/')->withHeader('X-HTTP-METHOD-OVERRIDE', 'PATCH');
+        $request = $requestFactory
+            ->createServerRequest('POST', '/')
+            ->withHeader('X-HTTP-METHOD-OVERRIDE', 'PATCH');
         $instance->process($request, $requestHandler);
         $this->assertSame('PATCH', $requestHandler->method);
 
-        $request = $requestFactory->createServerRequest('POST', '/')->withHeader('XHTTPMETHODOVERRIDE', 'PATCH');
+        $request = $requestFactory
+            ->createServerRequest('POST', '/')
+            ->withHeader('XHTTPMETHODOVERRIDE', 'PATCH');
         $instance->process($request, $requestHandler);
         $this->assertSame('POST', $requestHandler->method);
     }

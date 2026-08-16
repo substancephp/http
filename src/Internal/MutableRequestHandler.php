@@ -14,7 +14,7 @@ use SubstancePHP\HTTP\Route;
 /** @internal */
 class MutableRequestHandler implements RequestHandlerInterface
 {
-    /** @param MiddlewareInterface[] $middlewareStack stack of middlewares, listed in order of INSIDE to OUT */
+    /** @param MiddlewareInterface[] $middlewareStack middlewares in INSIDE-to-OUT order */
     public function __construct(private array $middlewareStack)
     {
     }

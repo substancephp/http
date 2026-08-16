@@ -13,8 +13,10 @@ use SubstancePHP\HTTP\Util\Request;
 
 class BodyParserMiddleware implements MiddlewareInterface
 {
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-    {
+    public function process(
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler,
+    ): ResponseInterface {
         if (! empty($request->getParsedBody())) {
             return $handler->handle($request);
         }

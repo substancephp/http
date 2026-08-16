@@ -11,8 +11,8 @@ readonly class Skip
     public array $skippableMiddlewares;
 
     /**
-     * @param string ...$middlewares the fully qualified class names of the PSR-15 middleware classes that should be
-     *   skipped when running a request-handling action callback via {@see RequestHandler}.
+     * @param string ...$middlewares the fully qualified class names of the PSR-15 middleware classes that
+     *   should be skipped when running a request-handling action callback via {@see RequestHandler}.
      */
     public function __construct(string ...$middlewares)
     {

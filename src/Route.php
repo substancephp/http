@@ -29,7 +29,7 @@ class Route
 
     public readonly string $normalizedPath;
 
-    /** @var string[] fully-qualified names of PSR-15 middleware classes that should be skipped by this route */
+    /** @var string[] fully-qualified names of PSR-15 middleware classes this route should skip */
     private ?array $skippableMiddlewares;
 
     private function __construct(callable $callback, string $normalizedPath)
@@ -44,8 +44,8 @@ class Route
      *   are located.
      * @param string $method the HTTP method handled by this route
      * @param string $path the URL path
-     * @return ?self a new instance; or null if either: there is no file matching this route; or there is a file
-     *   but it does not return a callable.
+     * @return ?self a new instance; or null if either: there is no file matching this route; or there is
+     *   a file but it does not return a callable.
      */
     public static function from(string $actionRoot, string $method, string $path): ?self
     {
@@ -63,8 +63,8 @@ class Route
     }
 
     /**
-     * The route callback may be annotated with the Skip attribute, indicating that certain middlewares should be
-     * skipped when handling the route.
+     * The route callback may be annotated with the Skip attribute, indicating that certain middlewares
+     * should be skipped when handling the route.
      *
      * When passed a fully qualified class name, this method returns true if and only if the corresponding
      * middleware has been indicated in this way.
@@ -81,7 +81,8 @@ class Route
     }
 
     /**
-     * @return array<string> fully-qualified class names of middlewares that should be skipped in handling this route
+     * @return array<string> fully-qualified class names of middlewares that should be skipped in handling
+     *   this route
      * @throws \ReflectionException
      */
     private function computeSkippableMiddlewares(): array

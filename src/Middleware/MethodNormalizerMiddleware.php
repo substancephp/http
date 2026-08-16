@@ -11,8 +11,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class MethodNormalizerMiddleware implements MiddlewareInterface
 {
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-    {
+    public function process(
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler,
+    ): ResponseInterface {
         $overridingMethod = $request->getHeaderLine('X-Http-Method-Override');
         if (\strlen($overridingMethod) == 0) {
             $body = $request->getParsedBody();

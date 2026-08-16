@@ -63,7 +63,10 @@ final class UnescapedOutputFuncCallRule implements Rule
             case 'call_user_func':
             case 'call_user_func_array':
                 $firstArg = $node->args[0] ?? null;
-                if ($firstArg instanceof Node\Arg && $this->isOutputFunctionName($scope->getType($firstArg->value))) {
+                if (
+                    $firstArg instanceof Node\Arg
+                    && $this->isOutputFunctionName($scope->getType($firstArg->value))
+                ) {
                     return $checker->checkExpressions([$node], $scope);
                 }
 

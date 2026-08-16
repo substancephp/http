@@ -112,7 +112,10 @@ class HtmlRendererTest extends TestCase
     }
 
     #[Test]
-    #[TestWith(['"><script>alert(1)</script>', '&quot;&gt;&lt;script&gt;alert&#x28;1&#x29;&lt;&#x2F;script&gt;'])]
+    #[TestWith([
+        '"><script>alert(1)</script>',
+        '&quot;&gt;&lt;script&gt;alert&#x28;1&#x29;&lt;&#x2F;script&gt;',
+    ])]
     #[TestWith(["it's \"quoted\"", 'it&#x27;s&#x20;&quot;quoted&quot;'])]
     public function escapeHtmlAttr(string $content, string $expected): void
     {
@@ -120,7 +123,10 @@ class HtmlRendererTest extends TestCase
     }
 
     #[Test]
-    #[TestWith(['</script><script>alert(1)</script>', '\x3C\x2Fscript\x3E\x3Cscript\x3Ealert\x281\x29\x3C\x2Fscript\x3E'])]
+    #[TestWith([
+        '</script><script>alert(1)</script>',
+        '\x3C\x2Fscript\x3E\x3Cscript\x3Ealert\x281\x29\x3C\x2Fscript\x3E',
+    ])]
     #[TestWith(["line1\nline2\r", 'line1\x0Aline2\x0D'])]
     public function escapeJs(string $content, string $expected): void
     {
@@ -128,7 +134,10 @@ class HtmlRendererTest extends TestCase
     }
 
     #[Test]
-    #[TestWith(['</style><script>alert(1)</script>', '\3C \2F style\3E \3C script\3E alert\28 1\29 \3C \2F script\3E '])]
+    #[TestWith([
+        '</style><script>alert(1)</script>',
+        '\3C \2F style\3E \3C script\3E alert\28 1\29 \3C \2F script\3E ',
+    ])]
     #[TestWith(["'\"<>&", '\27 \22 \3C \3E \26 '])]
     public function escapeCss(string $content, string $expected): void
     {

@@ -10,8 +10,10 @@ use Psr\Log\LoggerInterface;
 
 readonly class ErrorResponseFallbackGenerator implements ErrorResponseFallbackGeneratorInterface
 {
-    public function __construct(private ResponseFactoryInterface $responseFactory, private ?LoggerInterface $logger)
-    {
+    public function __construct(
+        private ResponseFactoryInterface $responseFactory,
+        private ?LoggerInterface $logger,
+    ) {
     }
 
     public function __invoke(\Throwable $e): ResponseInterface
