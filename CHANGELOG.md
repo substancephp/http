@@ -1,5 +1,14 @@
 # CHANGELOG
 
+### v0.3.0
+
+Major:
+* Add functions in HtmlRenderer for escaping not just HTML, but also HTML attributes, JavaScript
+  and CSS.
+* HtmlRenderer::e() is now deprecated; replaced with ->h() and other context-specialized escaping methods.
+* Add a "do-nothing" function in HtmlRenderer to explicitly output the passed content unescaped.
+* Add a PHPStan extension for detecting unescaped output in HTML templates.
+
 ### v0.2.0
 
 Major:

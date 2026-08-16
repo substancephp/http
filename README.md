@@ -23,10 +23,12 @@ This project steers away from:
 * Compilation steps (e.g. no template compilation)
 * Controller classes
 
-## Installation
+## Getting started
 
 TODO
 
-## Usage
+## Detailed documentation
 
-TODO
+* [Static analysis: catching unescaped output](docs/static-analysis.md) — a
+  best-effort PHPStan extension bundled with this package that flags
+  unescaped output in HTML templates (a lint aid, not a security guarantee).

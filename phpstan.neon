@@ -1,0 +1,14 @@
+# This project's own PHPStan configuration (auto-discovered when running
+# `composer stan` from the repository root). It enables the package's own
+# unescaped-output rules on the library code, and excludes the rule-test
+# fixtures, which intentionally contain unescaped output.
+#
+# Consumers of this package should NOT include this file; they should include
+# `extension.neon` instead (see docs/static-analysis.md).
+
+includes:
+    - extension.neon
+
+parameters:
+    excludePaths:
+        - test/PHPStan/data
