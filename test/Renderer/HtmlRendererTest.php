@@ -23,6 +23,10 @@ use TestUtil\TestUtil;
 #[CoversMethod(HtmlRenderer::class, 'escapeJs')]
 #[CoversMethod(HtmlRenderer::class, 'escapeCss')]
 #[CoversMethod(HtmlRenderer::class, 'escapeUrl')]
+#[CoversMethod(HtmlRenderer::class, 'a')]
+#[CoversMethod(HtmlRenderer::class, 'j')]
+#[CoversMethod(HtmlRenderer::class, 'c')]
+#[CoversMethod(HtmlRenderer::class, 'u')]
 class HtmlRendererTest extends TestCase
 {
     #[Test]
@@ -150,6 +154,47 @@ class HtmlRendererTest extends TestCase
     public function escapeUrl(string $content, string $expected): void
     {
         $this->assertSame($expected, $this->makeRenderer()->escapeUrl($content));
+    }
+
+    #[Test]
+    #[TestWith([
+        '"><script>alert(1)</script>',
+        '&quot;&gt;&lt;script&gt;alert&#x28;1&#x29;&lt;&#x2F;script&gt;',
+    ])]
+    #[TestWith(["it's \"quoted\"", 'it&#x27;s&#x20;&quot;quoted&quot;'])]
+    public function a(string $content, string $expected): void
+    {
+        $this->assertSame($expected, $this->makeRenderer()->a($content));
+    }
+
+    #[Test]
+    #[TestWith([
+        '</script><script>alert(1)</script>',
+        '\x3C\x2Fscript\x3E\x3Cscript\x3Ealert\x281\x29\x3C\x2Fscript\x3E',
+    ])]
+    #[TestWith(["line1\nline2\r", 'line1\x0Aline2\x0D'])]
+    public function j(string $content, string $expected): void
+    {
+        $this->assertSame($expected, $this->makeRenderer()->j($content));
+    }
+
+    #[Test]
+    #[TestWith([
+        '</style><script>alert(1)</script>',
+        '\3C \2F style\3E \3C script\3E alert\28 1\29 \3C \2F script\3E ',
+    ])]
+    #[TestWith(["'\"<>&", '\27 \22 \3C \3E \26 '])]
+    public function c(string $content, string $expected): void
+    {
+        $this->assertSame($expected, $this->makeRenderer()->c($content));
+    }
+
+    #[Test]
+    #[TestWith(["http://example.com/?q=a b&x='y'", 'http%3A%2F%2Fexample.com%2F%3Fq%3Da%20b%26x%3D%27y%27'])]
+    #[TestWith(['a<b>c', 'a%3Cb%3Ec'])]
+    public function u(string $content, string $expected): void
+    {
+        $this->assertSame($expected, $this->makeRenderer()->u($content));
     }
 
     /** @param array<array-key, mixed> $data */

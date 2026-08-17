@@ -45,7 +45,19 @@ class HtmlRenderer implements RendererInterface
         return $this->escaper->escapeHtmlAttr($content);
     }
 
+    /** Shorthand for {@see escapeHtmlAttr()} */
+    public function a(string $content): string
+    {
+        return $this->escaper->escapeHtmlAttr($content);
+    }
+
     public function escapeJs(string $content): string
+    {
+        return $this->escaper->escapeJs($content);
+    }
+
+    /** Shorthand for {@see escapeJs()} */
+    public function j(string $content): string
     {
         return $this->escaper->escapeJs($content);
     }
@@ -55,7 +67,19 @@ class HtmlRenderer implements RendererInterface
         return $this->escaper->escapeCss($content);
     }
 
+    /** Shorthand for {@see escapeCss()} */
+    public function c(string $content): string
+    {
+        return $this->escaper->escapeCss($content);
+    }
+
     public function escapeUrl(string $content): string
+    {
+        return $this->escaper->escapeUrl($content);
+    }
+
+    /** Shorthand for {@see escapeUrl()} */
+    public function u(string $content): string
     {
         return $this->escaper->escapeUrl($content);
     }

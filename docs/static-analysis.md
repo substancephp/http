@@ -37,10 +37,12 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 Output statements — `echo`/`<?= ?>`, `print`, `die()`/`exit()`,
 `printf()`/`vprintf()`, `var_dump()`, `print_r()` — are flagged as
 `substancephp.unescapedOutput` unless the value is clearly safe: a literal
-or provable number/boolean, the result of a renderer escape method (`h()`,
-`e()`, `escapeHtml()`, `escapeHtmlAttr()`, `escapeJs()`, `escapeCss()`,
-`escapeUrl()`), of `htmlspecialchars()`/`htmlentities()`, or of `raw()` (see
-below), or a concatenation, ternary, null-coalescing or interpolated string
+or provable number/boolean, the result of a renderer escape method (the short
+forms `h()`, `a()`, `j()`, `c()`, `u()`, or the long forms `escapeHtml()`,
+`escapeHtmlAttr()`, `escapeJs()`, `escapeCss()`, `escapeUrl()`, or the
+deprecated `e()`), of `htmlspecialchars()`/`htmlentities()`, or of `raw()`
+(see below), or a concatenation, ternary, null-coalescing or interpolated
+string
 built from safe parts, optionally including `raw()`. Anything the rules
 cannot clearly classify — for example a dynamic call — is best effort: it
 may or may not be flagged.

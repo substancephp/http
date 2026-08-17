@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### v0.3.1
+
+* Add short aliases for the HtmlRenderer escaping methods: `->a()`, `->j()`, `->c()` and `->u()`
+  for `->escapeHtmlAttr()`, `->escapeJs()`, `->escapeCss()` and `->escapeUrl()` respectively.
+
 ### v0.3.0
 
 Major:

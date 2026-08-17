@@ -15,6 +15,10 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 <p><?= 'a' . $this->escapeHtml($name) ?></p>
 <p><?= $this->h($name) ?: 'default' ?></p>
 <p><?= htmlspecialchars($name) ?></p>
+<p><?= $this->a($name) ?></p>
+<p><?= $this->j($name) ?></p>
+<p><?= $this->c($name) ?></p>
+<p><?= $this->u($name) ?></p>
 <p><?= $name ?></p>
 <p><?= $this->raw($name) ?></p>
 <p><?= $name . '!' ?></p>

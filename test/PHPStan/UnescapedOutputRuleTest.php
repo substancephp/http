@@ -26,11 +26,11 @@ final class UnescapedOutputRuleTest extends RuleTestCase
             . 'unescaped with $this->raw().';
 
         $this->analyse([__DIR__ . '/data/unescaped-output.php'], [
-            [$expectedMessage, 18],
-            [$expectedMessage, 20],
-            [$expectedMessage, 23],
+            [$expectedMessage, 22],
+            [$expectedMessage, 24],
             [$expectedMessage, 27],
-            [$expectedMessage, 28],
+            [$expectedMessage, 31],
+            [$expectedMessage, 32],
         ]);
     }
 

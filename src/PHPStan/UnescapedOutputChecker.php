@@ -42,8 +42,9 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
  *
  * - a string, number or magic-constant literal, or the booleans `true`,
  *   `false` and `null`;
- * - the result of an escaping method of {@see HtmlRenderer}: `h()`, `e()`,
- *   `escapeHtml()`, `escapeHtmlAttr()`, `escapeJs()`, `escapeCss()` or
+ * - the result of an escaping method of {@see HtmlRenderer}: the short forms
+ *   `h()`, `a()`, `j()`, `c()` and `u()`, the deprecated `e()`, or the long
+ *   forms `escapeHtml()`, `escapeHtmlAttr()`, `escapeJs()`, `escapeCss()` and
  *   `escapeUrl()`;
  * - a call to PHP's `htmlspecialchars()` or `htmlentities()`;
  * - a concatenation, ternary or null-coalescing expression, or an
@@ -70,6 +71,10 @@ final class UnescapedOutputChecker
     /** Escape methods of {@see HtmlRenderer}; output of these is safe. */
     private const ESCAPE_METHODS = [
         'h' => true,
+        'a' => true,
+        'j' => true,
+        'c' => true,
+        'u' => true,
         'e' => true,
         'escapehtml' => true,
         'escapehtmlattr' => true,
