@@ -50,7 +50,7 @@
         "qa": ["@lint", "@stan", "@test"],
         "lint": "vendor/bin/php-cs-fixer check",
         "delint": "vendor/bin/php-cs-fixer fix",
-        "stan": "vendor/bin/phpstan analyse --level=8 src test testutil",
+        "stan": "vendor/bin/phpstan analyse --level=8 --memory-limit=1G src test testutil",
         "test": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-text test",
         "serve-coverage-report": "php -S localhost:3000 -t html-coverage"
     },
