@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.4.0
+
+* Support path parameters e.g. `/foobars/[1].get.php`.
+
 ### v0.3.1
 
 * Add short aliases for the HtmlRenderer escaping methods: `->a()`, `->j()`, `->c()` and `->u()`

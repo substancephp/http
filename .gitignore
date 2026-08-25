@@ -6,3 +6,4 @@ html-coverage
 composer.lock
 .env
 .scratch
+unversioned-notes
