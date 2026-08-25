@@ -8,6 +8,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\RequestParams\BodyParams;
+use SubstancePHP\HTTP\RequestParams\PathParams;
 use SubstancePHP\HTTP\RequestParams\QueryParams;
 use SubstancePHP\HTTP\RequestParams\ServerParams;
 
@@ -29,6 +30,7 @@ class ContextFactory implements ContextFactoryInterface
             QueryParams::class => fn () => QueryParams::fromRequest($request),
             BodyParams::class => fn () => BodyParams::fromRequest($request),
             ServerParams::class => fn () => ServerParams::fromRequest($request),
+            PathParams::class => fn () => PathParams::fromRequest($request),
             Respond::class => fn ($c) => new Respond(
                 statusCode: $request->getMethod() === 'POST' ? 201 : 200,
                 contentType: $c->get('substance.http.default-content-type'),
