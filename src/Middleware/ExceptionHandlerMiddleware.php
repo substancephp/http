@@ -12,6 +12,8 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use SubstancePHP\HTTP\ErrorResponseFallbackGeneratorInterface;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
+use SubstancePHP\HTTP\Renderer\HtmlRenderer;
+use SubstancePHP\HTTP\RendererFactoryInterface;
 use SubstancePHP\HTTP\Util\Json;
 
 /**
@@ -27,8 +29,14 @@ use SubstancePHP\HTTP\Util\Json;
  *   client, the body being a generic "Internal Server Error" phrase instead.
  *
  * Error bodies follow the client's `Accept` header: `application/json` yields `{"error": "<message>"}`,
- * `text/html` yields the message HTML-escaped, and anything else (a wildcard `Accept` or no `Accept`
- * header) yields plain text. See {@see self::resolveContentType()}.
+ * `text/html` renders `{templateRoot}/{errorTemplatePath}.html.php` when present, falling back to
+ * HTML-escaping the message otherwise; anything else (a wildcard `Accept` or no `Accept` header)
+ * yields plain text. See {@see self::resolveContentType()}.
+ *
+ * The error template, when used, receives the message as `$error`, the status code as `$statusCode`,
+ * and `$this` bound to an {@see HtmlRenderer} exposing the escaping helpers. `templateRoot` must
+ * match the one configured on the injected {@see RendererFactoryInterface}; the
+ * `substance.error-template` container key overrides `errorTemplatePath` (default `error`).
  *
  * A correlation id is generated once per request at the start of {@see self::process()}, so that
  * every log line emitted during request handling can carry it. It is attached to the request as the
@@ -47,6 +55,9 @@ class ExceptionHandlerMiddleware implements MiddlewareInterface
     public function __construct(
         private ResponseFactoryInterface $responseFactory,
         private ErrorResponseFallbackGeneratorInterface $errorResponseFallbackGenerator,
+        private RendererFactoryInterface $rendererFactory,
+        private string $templateRoot,
+        private string $errorTemplatePath = 'error',
         private ?LoggerInterface $logger = null,
     ) {
     }
@@ -78,7 +89,7 @@ class ExceptionHandlerMiddleware implements MiddlewareInterface
             ->createResponse($e->getStatusCode())
             ->withHeader('Content-Type', $contentType)
             ->withHeader('X-Request-Id', $correlationId);
-        $response->getBody()->write(self::renderBody($e->getMessage(), $contentType));
+        $response->getBody()->write($this->renderBody($e->getMessage(), $e->getStatusCode(), $contentType));
         return $response;
     }
 
@@ -92,7 +103,7 @@ class ExceptionHandlerMiddleware implements MiddlewareInterface
         $response = $response
             ->withHeader('Content-Type', $contentType)
             ->withHeader('X-Request-Id', $correlationId);
-        $response->getBody()->write(self::renderBody('Internal Server Error', $contentType));
+        $response->getBody()->write($this->renderBody('Internal Server Error', 500, $contentType));
         return $response;
     }
 
@@ -128,15 +139,33 @@ class ExceptionHandlerMiddleware implements MiddlewareInterface
         return \array_keys($mediaTypes);
     }
 
-    private static function renderBody(string $message, string $contentType): string
+    private function renderBody(string $message, int $statusCode, string $contentType): string
     {
         if ($contentType === self::CONTENT_TYPE_JSON) {
             return Json::of(['error' => $message]);
         }
         if ($contentType === self::CONTENT_TYPE_HTML) {
-            return \htmlspecialchars($message, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
+            return $this->renderHtmlBody($message, $statusCode);
         }
         return $message;
+    }
+
+    private function renderHtmlBody(string $message, int $statusCode): string
+    {
+        if (! $this->errorTemplateExists()) {
+            return \htmlspecialchars($message, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
+        }
+        $renderer = $this->rendererFactory->createRenderer(
+            $this->errorTemplatePath,
+            self::CONTENT_TYPE_HTML,
+            ['error' => $message, 'statusCode' => $statusCode],
+        );
+        return $renderer->render();
+    }
+
+    private function errorTemplateExists(): bool
+    {
+        return \is_file("{$this->templateRoot}/{$this->errorTemplatePath}.html.php");
     }
 
     private static function generateCorrelationId(): string

@@ -29,6 +29,7 @@ abstract class SubstanceProvider implements ProviderInterface
 
             // configuration
             'substance.http.default-content-type' => fn () => 'text/html; charset=utf-8',
+            'substance.error-template' => fn () => 'error',
 
             // http response generation
             EmitterInterface::class => fn () => new Emitter(),
@@ -45,9 +46,12 @@ abstract class SubstanceProvider implements ProviderInterface
             // middleware
             BodyParserMiddleware::class => fn () => new BodyParserMiddleware(),
             ExceptionHandlerMiddleware::class => fn ($c) => new ExceptionHandlerMiddleware(
-                $c->get(ResponseFactoryInterface::class),
-                $c->get(ErrorResponseFallbackGeneratorInterface::class),
-                $c->has(LoggerInterface::class) ? $c->get(LoggerInterface::class) : null,
+                responseFactory: $c->get(ResponseFactoryInterface::class),
+                errorResponseFallbackGenerator: $c->get(ErrorResponseFallbackGeneratorInterface::class),
+                rendererFactory: $c->get(RendererFactoryInterface::class),
+                templateRoot: $c->get('substance.template-root'),
+                errorTemplatePath: $c->get('substance.error-template'),
+                logger: $c->has(LoggerInterface::class) ? $c->get(LoggerInterface::class) : null,
             ),
             MethodNormalizerMiddleware::class => fn () => new MethodNormalizerMiddleware(),
             RouteActorMiddleware::class => fn ($c) => new RouteActorMiddleware(

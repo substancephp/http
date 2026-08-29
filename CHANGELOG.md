@@ -7,6 +7,9 @@
   error bodies follow the client's `Accept` header (json / html / plain text). Every response
   carries an `X-Request-Id` correlation id, generated once per request and exposed to the
   middleware stack via a request attribute.
+* HTML error responses render through `{templateRoot}/error.html.php` when present (receiving
+  `$error` and `$statusCode`, escaped via `HtmlRenderer`), falling back to inline HTML escaping
+  otherwise; the template name is configurable via `substance.error-template`.
 * `SubstanceProvider` now provides a default `substance.http.default-content-type` of
   `text/html; charset=utf-8`, overridable by later providers.
 

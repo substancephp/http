@@ -17,6 +17,8 @@ use Psr\Log\LoggerInterface;
 use SubstancePHP\HTTP\ErrorResponseFallbackGenerator;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
 use SubstancePHP\HTTP\Middleware\ExceptionHandlerMiddleware;
+use SubstancePHP\HTTP\RendererFactory;
+use TestUtil\TestUtil;
 
 #[CoversClass(ExceptionHandlerMiddleware::class)]
 #[CoversMethod(ExceptionHandlerMiddleware::class, '__construct')]
@@ -28,8 +30,10 @@ class ExceptionHandlerMiddlewareTest extends TestCase
     {
         $responseFactory = new ResponseFactory();
         $instance = new ExceptionHandlerMiddleware(
-            $responseFactory,
-            new ErrorResponseFallbackGenerator($responseFactory, null),
+            responseFactory: $responseFactory,
+            errorResponseFallbackGenerator: new ErrorResponseFallbackGenerator($responseFactory, null),
+            rendererFactory: new RendererFactory('', 'utf-8'),
+            templateRoot: '',
         );
         $this->assertInstanceOf(ExceptionHandlerMiddleware::class, $instance);
     }
@@ -54,11 +58,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
             });
 
         $responseFactory = new ResponseFactory();
-        $instance = new ExceptionHandlerMiddleware(
-            $responseFactory,
-            new ErrorResponseFallbackGenerator($responseFactory, null),
-            $logger,
-        );
+        $instance = $this->makeInstance($responseFactory, $logger);
 
         // tests
 
@@ -87,10 +87,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         };
 
         $responseFactory = new ResponseFactory();
-        $instance = new ExceptionHandlerMiddleware(
-            $responseFactory,
-            new ErrorResponseFallbackGenerator($responseFactory, null),
-        );
+        $instance = $this->makeInstance($responseFactory, null);
 
         // tests
 
@@ -117,10 +114,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         };
 
         $responseFactory = new ResponseFactory();
-        $instance = new ExceptionHandlerMiddleware(
-            $responseFactory,
-            new ErrorResponseFallbackGenerator($responseFactory, null),
-        );
+        $instance = $this->makeInstance($responseFactory, null);
 
         // tests
 
@@ -147,10 +141,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         };
 
         $responseFactory = new ResponseFactory();
-        $instance = new ExceptionHandlerMiddleware(
-            $responseFactory,
-            new ErrorResponseFallbackGenerator($responseFactory, null),
-        );
+        $instance = $this->makeInstance($responseFactory, null);
 
         $requestFactory = new ServerRequestFactory();
 
@@ -195,11 +186,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
             });
 
         $responseFactory = new ResponseFactory();
-        $instance = new ExceptionHandlerMiddleware(
-            $responseFactory,
-            new ErrorResponseFallbackGenerator($responseFactory, $logger),
-            $logger,
-        );
+        $instance = $this->makeInstance($responseFactory, $logger);
 
         // tests
 
@@ -230,10 +217,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         };
 
         $responseFactory = new ResponseFactory();
-        $instance = new ExceptionHandlerMiddleware(
-            $responseFactory,
-            new ErrorResponseFallbackGenerator($responseFactory, null),
-        );
+        $instance = $this->makeInstance($responseFactory, null);
 
         // tests
 
@@ -245,6 +229,52 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         $this->assertSame('{"error":"Internal Server Error"}', (string) $response->getBody());
         $this->assertSame('application/json', $response->getHeaderLine('Content-Type'));
         $this->assertNotSame('', $response->getHeaderLine('X-Request-Id'));
+    }
+
+    #[Test]
+    public function processRendersErrorTemplateWhenPresent(): void
+    {
+        // setup
+
+        $requestHandler = new class () implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                if ($request->getAttribute('throw-500')) {
+                    throw new \LogicException('boom');
+                }
+                UserError::throw(418, '<script>alert(1)</script>');
+            }
+        };
+
+        $responseFactory = new ResponseFactory();
+        $templateRoot = TestUtil::getFixtureRoot() . '/template';
+        $instance = $this->makeInstance($responseFactory, null, $templateRoot);
+
+        $requestFactory = new ServerRequestFactory();
+
+        // tests
+
+        // UserError renders through the error template, escaped
+        $request = $requestFactory->createServerRequest('GET', '/')
+            ->withHeader('Accept', 'text/html');
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(418, $response->getStatusCode());
+        $this->assertStringContainsString('<h1>418</h1>', (string) $response->getBody());
+        $this->assertStringContainsString(
+            '<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>',
+            (string) $response->getBody(),
+        );
+
+        // generic exception renders through the error template without leaking the message
+        $request = $requestFactory->createServerRequest('GET', '/')
+            ->withHeader('Accept', 'text/html')
+            ->withAttribute('throw-500', true);
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(500, $response->getStatusCode());
+        $body = (string) $response->getBody();
+        $this->assertStringContainsString('<h1>500</h1>', $body);
+        $this->assertStringContainsString('Internal Server Error', $body);
+        $this->assertStringNotContainsString('boom', $body);
     }
 
     #[Test]
@@ -276,11 +306,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         $logger->expects($this->never())->method('warning');
         $logger->expects($this->never())->method('error');
 
-        $instance = new ExceptionHandlerMiddleware(
-            $responseFactory,
-            new ErrorResponseFallbackGenerator($responseFactory, $logger),
-            $logger,
-        );
+        $instance = $this->makeInstance($responseFactory, $logger);
 
         // tests
 
@@ -291,5 +317,19 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         $this->assertSame($requestHandler->correlationId, $response->getHeaderLine('X-Request-Id'));
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('hello', (string) $response->getBody());
+    }
+
+    private function makeInstance(
+        ResponseFactory $responseFactory,
+        ?LoggerInterface $logger,
+        string $templateRoot = '',
+    ): ExceptionHandlerMiddleware {
+        return new ExceptionHandlerMiddleware(
+            responseFactory: $responseFactory,
+            errorResponseFallbackGenerator: new ErrorResponseFallbackGenerator($responseFactory, $logger),
+            rendererFactory: new RendererFactory($templateRoot, 'utf-8'),
+            templateRoot: $templateRoot,
+            logger: $logger,
+        );
     }
 }

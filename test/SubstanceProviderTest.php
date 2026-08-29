@@ -22,6 +22,7 @@ use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteMatcherMiddleware;
 use SubstancePHP\HTTP\SubstanceProvider;
 use TestUtil\Fixture\ContentTypeOverrideProvider;
+use TestUtil\TestUtil;
 
 #[CoversClass(SubstanceProvider::class)]
 #[CoversMethod(SubstanceProvider::class, 'factories')]
@@ -48,6 +49,33 @@ class SubstanceProviderTest extends TestCase
         $this->assertArrayHasKey(RouteActorMiddleware::class, $result);
         $this->assertArrayHasKey(RouteMatcherMiddleware::class, $result);
         $this->assertArrayHasKey('substance.http.default-content-type', $result);
+        $this->assertArrayHasKey('substance.error-template', $result);
+    }
+
+    #[Test]
+    public function defaultErrorTemplate(): void
+    {
+        $environment = new Environment([]);
+        $container = Container::from(SubstanceProvider::factories($environment));
+        $this->assertSame('error', $container->get('substance.error-template'));
+    }
+
+    #[Test]
+    public function exceptionHandlerMiddlewareResolvable(): void
+    {
+        $instance = Application::make(
+            env: [],
+            actionRoot: TestUtil::getActionFixtureRoot(),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+            providers: [SubstanceProvider::class],
+            middlewares: [ExceptionHandlerMiddleware::class],
+            htmlEncoding: 'utf-8',
+        );
+
+        $this->assertInstanceOf(
+            ExceptionHandlerMiddleware::class,
+            $instance->get(ExceptionHandlerMiddleware::class),
+        );
     }
 
     #[Test]
