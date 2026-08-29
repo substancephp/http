@@ -47,6 +47,8 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
  *   forms `escapeHtml()`, `escapeHtmlAttr()`, `escapeJs()`, `escapeCss()` and
  *   `escapeUrl()`;
  * - a call to PHP's `htmlspecialchars()` or `htmlentities()`;
+ * - the return value of {@see HtmlRenderer::partial()}, since a partial is
+ *   itself a template responsible for escaping its own output;
  * - a concatenation, ternary or null-coalescing expression, or an
  *   interpolated string, made only of safe parts;
  * - a `printf()`/`vprintf()` call with a literal format string whose
@@ -217,6 +219,11 @@ final class UnescapedOutputChecker
         }
         if ($name === 'raw') {
             return self::RAW;
+        }
+        // A partial renders its own template, which is responsible for escaping its own output, so
+        // echoing the rendered partial is safe.
+        if ($name === 'partial') {
+            return self::SAFE;
         }
 
         return self::UNSAFE;

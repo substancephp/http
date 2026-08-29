@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### v0.6.0
+
+* `HtmlRenderer` supports partials: `$this->partial('name', $data)` renders
+  `{templateRoot}/partials/name.html.php` with only the passed data, returning the output as a
+  string; a missing partial throws `MissingPartialException`.
+
 ### v0.5.0
 
 * Add `ExceptionHandlerMiddleware`, converting a thrown `UserError` into a useful error response of
