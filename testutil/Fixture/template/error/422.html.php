@@ -11,8 +11,8 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 <!DOCTYPE html>
 <html lang="en">
 <body>
-    <h1><?= $this->h((string) $statusCode) ?></h1>
+    <h1>Unprocessable Entity</h1>
     <p><?= $this->h($error) ?></p>
-    <p>Generic</p>
+    <p>Specific</p>
 </body>
 </html>

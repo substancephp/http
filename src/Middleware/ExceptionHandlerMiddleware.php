@@ -29,13 +29,15 @@ use SubstancePHP\HTTP\Util\Json;
  *   client, the body being a generic "Internal Server Error" phrase instead.
  *
  * Error bodies follow the client's `Accept` header: `application/json` yields `{"error": "<message>"}`,
- * `text/html` renders `{templateRoot}/{errorTemplatePath}.html.php` when present, falling back to
- * HTML-escaping the message otherwise; anything else (a wildcard `Accept` or no `Accept` header)
- * yields plain text. See {@see self::resolveContentType()}.
+ * `text/html` renders `{templateRoot}/{errorTemplatePath}/{statusCode}.html.php`, else
+ * `{templateRoot}/{errorTemplatePath}.html.php`, else HTML-escapes the message inline; anything else
+ * (a wildcard `Accept` or no `Accept` header) yields plain text. See {@see self::resolveContentType()}.
  *
  * The error template, when used, receives the message as `$error`, the status code as `$statusCode`,
- * and `$this` bound to an {@see HtmlRenderer} exposing the escaping helpers. `templateRoot` must
- * match the one configured on the injected {@see RendererFactoryInterface}; the
+ * and `$this` bound to an {@see HtmlRenderer} exposing the escaping helpers. A per-status template
+ * (`{errorTemplatePath}/{statusCode}.html.php`) takes precedence over the generic one, so apps can
+ * give e.g. 422 and 409 their own pages while sharing `error.html.php` for everything else.
+ * `templateRoot` must match the one configured on the injected {@see RendererFactoryInterface}; the
  * `substance.error-template` container key overrides `errorTemplatePath` (default `error`).
  *
  * A correlation id is generated once per request at the start of {@see self::process()}, so that
@@ -152,20 +154,32 @@ class ExceptionHandlerMiddleware implements MiddlewareInterface
 
     private function renderHtmlBody(string $message, int $statusCode): string
     {
-        if (! $this->errorTemplateExists()) {
+        $templatePath = $this->resolveErrorTemplatePath($statusCode);
+        if ($templatePath === null) {
             return \htmlspecialchars($message, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
         }
         $renderer = $this->rendererFactory->createRenderer(
-            $this->errorTemplatePath,
+            $templatePath,
             self::CONTENT_TYPE_HTML,
             ['error' => $message, 'statusCode' => $statusCode],
         );
         return $renderer->render();
     }
 
-    private function errorTemplateExists(): bool
+    /**
+     * Resolves the template to render for a given status code: a per-status template
+     * (`{errorTemplatePath}/{statusCode}.html.php`) takes precedence over the generic one
+     * (`{errorTemplatePath}.html.php`). Returns null if neither exists.
+     */
+    private function resolveErrorTemplatePath(int $statusCode): ?string
     {
-        return \is_file("{$this->templateRoot}/{$this->errorTemplatePath}.html.php");
+        if (\is_file("{$this->templateRoot}/{$this->errorTemplatePath}/{$statusCode}.html.php")) {
+            return "{$this->errorTemplatePath}/{$statusCode}";
+        }
+        if (\is_file("{$this->templateRoot}/{$this->errorTemplatePath}.html.php")) {
+            return $this->errorTemplatePath;
+        }
+        return null;
     }
 
     private static function generateCorrelationId(): string

@@ -2,14 +2,12 @@
 
 ### v0.5.0
 
-* Add `ExceptionHandlerMiddleware`, converting `UserError` into a response with its status code and
-  message, and any other exception into a logged 500 (without leaking the message to the client);
-  error bodies follow the client's `Accept` header (json / html / plain text). Every response
-  carries an `X-Request-Id` correlation id, generated once per request and exposed to the
-  middleware stack via a request attribute.
-* HTML error responses render through `{templateRoot}/error.html.php` when present (receiving
-  `$error` and `$statusCode`, escaped via `HtmlRenderer`), falling back to inline HTML escaping
-  otherwise; the template name is configurable via `substance.error-template`.
+* Add `ExceptionHandlerMiddleware`, converting a thrown `UserError` into a useful error response of
+  the appropriate content type; and any other exception into a logged 500.
+* Every response now carries an `X-Request-Id` correlation ID.
+* HTML error responses render through `{templateRoot}/error/{statusCode}.html.php` when present,
+  falling back to `{templateRoot}/error.html.php`. The template name is configurable via
+  `substance.error-template`.
 * `SubstanceProvider` now provides a default `substance.http.default-content-type` of
   `text/html; charset=utf-8`, overridable by later providers.
 

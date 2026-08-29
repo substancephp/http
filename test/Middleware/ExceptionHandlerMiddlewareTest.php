@@ -278,6 +278,51 @@ class ExceptionHandlerMiddlewareTest extends TestCase
     }
 
     #[Test]
+    public function processRendersPerStatusErrorTemplateWhenPresent(): void
+    {
+        // setup
+
+        $requestHandler = new class () implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $statusCode = (int) $request->getAttribute('status-code');
+                UserError::throw($statusCode, 'nope');
+            }
+        };
+
+        $responseFactory = new ResponseFactory();
+        $templateRoot = TestUtil::getFixtureRoot() . '/template';
+        $instance = $this->makeInstance($responseFactory, null, $templateRoot);
+
+        $requestFactory = new ServerRequestFactory();
+
+        // tests
+
+        // a per-status template (error/422.html.php) takes precedence over the generic one
+        $request = $requestFactory->createServerRequest('GET', '/')
+            ->withHeader('Accept', 'text/html')
+            ->withAttribute('status-code', 422);
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(422, $response->getStatusCode());
+        $body = (string) $response->getBody();
+        $this->assertStringContainsString('<h1>Unprocessable Entity</h1>', $body);
+        $this->assertStringContainsString('<p>nope</p>', $body);
+        $this->assertStringNotContainsString('<h1>422</h1>', $body);
+        $this->assertStringContainsString('<p>Specific</p>', $body);
+
+        // a status without its own template falls back to the generic error.html.php
+        $request = $requestFactory->createServerRequest('GET', '/')
+            ->withHeader('Accept', 'text/html')
+            ->withAttribute('status-code', 409);
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(409, $response->getStatusCode());
+        $body = (string) $response->getBody();
+        $this->assertStringContainsString('<h1>409</h1>', $body);
+        $this->assertStringContainsString('<p>nope</p>', $body);
+        $this->assertStringContainsString('<p>Generic</p>', $body);
+    }
+
+    #[Test]
     public function processHappyPath(): void
     {
         // setup
