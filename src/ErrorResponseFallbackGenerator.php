@@ -16,9 +16,14 @@ readonly class ErrorResponseFallbackGenerator implements ErrorResponseFallbackGe
     ) {
     }
 
-    public function __invoke(\Throwable $e): ResponseInterface
+    /** @param ?string $correlationId if given, included in the log line; null leaves it unchanged. */
+    public function __invoke(\Throwable $e, ?string $correlationId = null): ResponseInterface
     {
-        $this->logger?->error(\get_class($e) . ': ' . $e->getMessage() . PHP_EOL . $e->getTraceAsString());
+        $message = \get_class($e) . ': ' . $e->getMessage();
+        if ($correlationId !== null) {
+            $message = "[$correlationId] $message";
+        }
+        $this->logger?->error($message . PHP_EOL . $e->getTraceAsString());
         return $this->responseFactory->createResponse(500)->withHeader('Content-Type', 'text/plain');
     }
 }

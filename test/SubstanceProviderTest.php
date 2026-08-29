@@ -17,6 +17,7 @@ use SubstancePHP\HTTP\Environment;
 use SubstancePHP\HTTP\EnvironmentInterface;
 use SubstancePHP\HTTP\ErrorResponseFallbackGeneratorInterface;
 use SubstancePHP\HTTP\Middleware\BodyParserMiddleware;
+use SubstancePHP\HTTP\Middleware\ExceptionHandlerMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteMatcherMiddleware;
 use SubstancePHP\HTTP\SubstanceProvider;
@@ -41,6 +42,7 @@ class SubstanceProviderTest extends TestCase
         $this->assertArrayHasKey(EmitterInterface::class, $result);
         $this->assertArrayHasKey(EnvironmentInterface::class, $result);
         $this->assertArrayHasKey(ErrorResponseFallbackGeneratorInterface::class, $result);
+        $this->assertArrayHasKey(ExceptionHandlerMiddleware::class, $result);
         $this->assertArrayHasKey(ResponseFactoryInterface::class, $result);
         $this->assertArrayHasKey(ResponseFactoryInterface::class, $result);
         $this->assertArrayHasKey(RouteActorMiddleware::class, $result);

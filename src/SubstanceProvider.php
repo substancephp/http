@@ -10,6 +10,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Log\LoggerInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\Middleware\BodyParserMiddleware;
+use SubstancePHP\HTTP\Middleware\ExceptionHandlerMiddleware;
 use SubstancePHP\HTTP\Middleware\MethodNormalizerMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteMatcherMiddleware;
@@ -43,6 +44,11 @@ abstract class SubstanceProvider implements ProviderInterface
 
             // middleware
             BodyParserMiddleware::class => fn () => new BodyParserMiddleware(),
+            ExceptionHandlerMiddleware::class => fn ($c) => new ExceptionHandlerMiddleware(
+                $c->get(ResponseFactoryInterface::class),
+                $c->get(ErrorResponseFallbackGeneratorInterface::class),
+                $c->has(LoggerInterface::class) ? $c->get(LoggerInterface::class) : null,
+            ),
             MethodNormalizerMiddleware::class => fn () => new MethodNormalizerMiddleware(),
             RouteActorMiddleware::class => fn ($c) => new RouteActorMiddleware(
                 $c,

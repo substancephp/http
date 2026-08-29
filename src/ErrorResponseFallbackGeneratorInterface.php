@@ -8,5 +8,6 @@ use Psr\Http\Message\ResponseInterface;
 
 interface ErrorResponseFallbackGeneratorInterface
 {
-    public function __invoke(\Throwable $e): ResponseInterface;
+    /** @param ?string $correlationId if given, included in the log line; null leaves it unchanged. */
+    public function __invoke(\Throwable $e, ?string $correlationId = null): ResponseInterface;
 }

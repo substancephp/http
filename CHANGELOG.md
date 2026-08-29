@@ -2,6 +2,11 @@
 
 ### v0.5.0
 
+* Add `ExceptionHandlerMiddleware`, converting `UserError` into a response with its status code and
+  message, and any other exception into a logged 500 (without leaking the message to the client);
+  error bodies follow the client's `Accept` header (json / html / plain text). Every response
+  carries an `X-Request-Id` correlation id, generated once per request and exposed to the
+  middleware stack via a request attribute.
 * `SubstanceProvider` now provides a default `substance.http.default-content-type` of
   `text/html; charset=utf-8`, overridable by later providers.
 
