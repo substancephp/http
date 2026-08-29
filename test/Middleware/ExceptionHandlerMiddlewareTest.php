@@ -264,6 +264,8 @@ class ExceptionHandlerMiddlewareTest extends TestCase
             '<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>',
             (string) $response->getBody(),
         );
+        // error pages take the default layout like any other view
+        $this->assertStringContainsString('<div id="layout">', (string) $response->getBody());
 
         // generic exception renders through the error template without leaking the message
         $request = $requestFactory->createServerRequest('GET', '/')

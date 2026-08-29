@@ -2,9 +2,7 @@
 
 ### v0.6.0
 
-* `HtmlRenderer` supports partials: `$this->partial('name', $data)` renders
-  `{templateRoot}/partials/name.html.php` with only the passed data, returning the output as a
-  string; a missing partial throws `MissingPartialException`.
+* `HtmlRenderer` now supports layouts and partials.
 
 ### v0.5.0
 

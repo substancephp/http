@@ -30,6 +30,7 @@ abstract class SubstanceProvider implements ProviderInterface
             // configuration
             'substance.http.default-content-type' => fn () => 'text/html; charset=utf-8',
             'substance.error-template' => fn () => 'error',
+            'substance.default-layout' => fn () => 'layout',
 
             // http response generation
             EmitterInterface::class => fn () => new Emitter(),
@@ -41,6 +42,7 @@ abstract class SubstanceProvider implements ProviderInterface
             RendererFactoryInterface::class => fn ($c) => new RendererFactory(
                 templateRoot: $c->get('substance.template-root'),
                 htmlEncoding: $c->get('substance.html-encoding'),
+                defaultLayout: $c->get('substance.default-layout'),
             ),
 
             // middleware

@@ -50,6 +50,15 @@ class SubstanceProviderTest extends TestCase
         $this->assertArrayHasKey(RouteMatcherMiddleware::class, $result);
         $this->assertArrayHasKey('substance.http.default-content-type', $result);
         $this->assertArrayHasKey('substance.error-template', $result);
+        $this->assertArrayHasKey('substance.default-layout', $result);
+    }
+
+    #[Test]
+    public function defaultLayout(): void
+    {
+        $environment = new Environment([]);
+        $container = Container::from(SubstanceProvider::factories($environment));
+        $this->assertSame('layout', $container->get('substance.default-layout'));
     }
 
     #[Test]

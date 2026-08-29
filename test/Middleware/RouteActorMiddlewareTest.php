@@ -105,7 +105,7 @@ class RouteActorMiddlewareTest extends TestCase
         $response = $instance->process($request, $requestHandler);
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertSame("<h1>Store 42</h1>\n", (string) $response->getBody());
+        $this->assertSame("<div id=\"layout\"><h1>Store 42</h1>\n</div>\n", (string) $response->getBody());
     }
 
     #[Test]
