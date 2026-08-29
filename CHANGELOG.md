@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.4.1
+
+* xdebug now only required in development
+
 ### v0.4.0
 
 * Support path parameters e.g. `/foobars/[1].get.php`.
