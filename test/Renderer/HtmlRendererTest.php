@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SubstancePHP\HTTP\Exception\RenderingException\MissingPartialException;
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 use TestUtil\TestUtil;
 
@@ -27,6 +28,7 @@ use TestUtil\TestUtil;
 #[CoversMethod(HtmlRenderer::class, 'j')]
 #[CoversMethod(HtmlRenderer::class, 'c')]
 #[CoversMethod(HtmlRenderer::class, 'u')]
+#[CoversMethod(HtmlRenderer::class, 'partial')]
 class HtmlRendererTest extends TestCase
 {
     #[Test]
@@ -197,13 +199,80 @@ class HtmlRendererTest extends TestCase
         $this->assertSame($expected, $this->makeRenderer()->u($content));
     }
 
+    #[Test]
+    public function partial(): void
+    {
+        $out = $this->makeRenderer()->partial('share', [
+            'url' => 'https://example.com/?q=a b',
+            'label' => '<b>Go</b>',
+        ]);
+        $this->assertSame(
+            '<a href="https%3A%2F%2Fexample.com%2F%3Fq%3Da%20b">&lt;b&gt;Go&lt;/b&gt;</a>',
+            $out,
+        );
+    }
+
+    #[Test]
+    public function partialDoesNotLeakViewData(): void
+    {
+        $renderer = $this->makeRenderer(['word' => 'view-word']);
+        $this->assertSame('CLEAN', $renderer->partial('leak-probe', []));
+    }
+
+    #[Test]
+    public function partialSupportsNesting(): void
+    {
+        $this->assertSame('[(hi)]', $this->makeRenderer()->partial('outer', ['word' => 'hi']));
+    }
+
+    #[Test]
+    public function partialThrowsWhenTemplateMissing(): void
+    {
+        $this->expectException(MissingPartialException::class);
+        $this->expectExceptionMessage('nonexistent');
+        $this->makeRenderer()->partial('nonexistent');
+    }
+
+    #[Test]
+    public function partialRethrowsErrorsFromThePartialItself(): void
+    {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('boom');
+        $this->makeRenderer()->partial('error-bomb');
+    }
+
+    #[Test]
+    public function partialDataKeysCannotCollideWithEngineState(): void
+    {
+        $out = $this->makeRenderer()->partial('collision-probe', [
+            'path' => 'user-path',
+            'data' => 'user-data',
+            'started' => 'user-started',
+            'result' => 'user-result',
+        ]);
+        $this->assertSame('user-path|user-data|user-started|user-result', $out);
+    }
+
+    #[Test]
+    public function renderDataKeysCannotCollideWithEngineState(): void
+    {
+        $renderer = new HtmlRenderer(
+            TestUtil::getFixtureRoot() . '/template/collision-view.html.php',
+            ['started' => 'user-started', 'result' => 'user-result'],
+            new Escaper('utf-8'),
+            TestUtil::getFixtureRoot() . '/template',
+        );
+        $this->assertSame('user-started|user-result', \trim($renderer->render()));
+    }
+
     /** @param array<array-key, mixed> $data */
     private function makeRenderer(array $data = []): HtmlRenderer
     {
         return new HtmlRenderer(
-            TestUtil::getFixtureRoot() . '/template/dummy-vars.php',
+            TestUtil::getFixtureRoot() . '/template/dummy-vars.html.php',
             $data,
             new Escaper('utf-8'),
+            TestUtil::getFixtureRoot() . '/template',
         );
     }
 }

@@ -40,12 +40,18 @@ Output statements — `echo`/`<?= ?>`, `print`, `die()`/`exit()`,
 or provable number/boolean, the result of a renderer escape method (the short
 forms `h()`, `a()`, `j()`, `c()`, `u()`, or the long forms `escapeHtml()`,
 `escapeHtmlAttr()`, `escapeJs()`, `escapeCss()`, `escapeUrl()`, or the
-deprecated `e()`), of `htmlspecialchars()`/`htmlentities()`, or of `raw()`
-(see below), or a concatenation, ternary, null-coalescing or interpolated
-string
-built from safe parts, optionally including `raw()`. Anything the rules
-cannot clearly classify — for example a dynamic call — is best effort: it
-may or may not be flagged.
+deprecated `e()`), of `htmlspecialchars()`/`htmlentities()`, of `raw()`
+(see below), or of `partial()` (a partial is itself a template responsible
+for escaping its own output), or a concatenation, ternary, null-coalescing or
+interpolated string built from safe parts, optionally including `raw()`.
+Anything the rules cannot clearly classify — for example a dynamic call — is
+best effort: it may or may not be flagged.
+
+Partials are themselves templates: the rules check them exactly like any
+other, so a partial must type `$this` as `HtmlRenderer` and escape its own
+output. Echoing a partial's result with `<?= $this->partial('name') ?>` is
+treated as safe, since the partial is responsible for escaping its own
+output.
 
 ## Outputting content deliberately unescaped
 

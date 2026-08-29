@@ -30,7 +30,7 @@ class RendererFactory implements RendererFactoryInterface
         if (\str_starts_with($responseContentType, 'text/html')) {
             $templatePath = "{$this->templateRoot}/{$normalizedRequestPath}.html.php";
             $escaper = new Escaper($this->htmlEncoding);
-            return new HtmlRenderer($templatePath, $responseData, $escaper);
+            return new HtmlRenderer($templatePath, $responseData, $escaper, $this->templateRoot);
         }
         return new EmptyRenderer();
     }
