@@ -24,15 +24,18 @@ abstract class SubstanceProvider implements ProviderInterface
         return [
             // environment
             EnvironmentInterface::class => fn () => $environment,
-            ContextFactoryInterface::class => fn ($c) => new ContextFactory(),
+            ContextFactoryInterface::class => fn () => new ContextFactory(),
+
+            // configuration
+            'substance.http.default-content-type' => fn () => 'text/html; charset=utf-8',
 
             // http response generation
-            EmitterInterface::class => fn ($c) => new Emitter(),
+            EmitterInterface::class => fn () => new Emitter(),
             ErrorResponseFallbackGeneratorInterface::class => fn ($c) => new ErrorResponseFallbackGenerator(
                 $c->get(ResponseFactoryInterface::class),
                 $c->has(LoggerInterface::class) ? $c->get(LoggerInterface::class) : null,
             ),
-            ResponseFactoryInterface::class => fn ($c) => new ResponseFactory(),
+            ResponseFactoryInterface::class => fn () => new ResponseFactory(),
             RendererFactoryInterface::class => fn ($c) => new RendererFactory(
                 templateRoot: $c->get('substance.template-root'),
                 htmlEncoding: $c->get('substance.html-encoding'),

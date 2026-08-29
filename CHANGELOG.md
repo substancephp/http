@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### v0.5.0
+
+* `SubstanceProvider` now provides a default `substance.http.default-content-type` of
+  `text/html; charset=utf-8`, overridable by later providers.
+
 ### v0.4.1
 
 * xdebug now only required in development

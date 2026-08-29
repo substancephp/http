@@ -6,8 +6,8 @@
 * Function signatures, function calls and array literals can and should be on one line unless either (a) strong
   readability case not to or (b) line length limit would be exceeded. In which case, go with one
   param per line.
-* Prefer `\explode`, `\Exception` etc. The leading backslash makes global namespace obvious and has
-  an (admittedly minuscule) performance benefit. For non-globals, use `use` (if necessary with
+* Prefer `\explode`, `\Exception`, `\DIRECTORY_SEPARATOR` etc. The leading backslash makes global namespace obvious
+  and has an (admittedly minuscule) performance benefit. For non-globals, use `use` (if necessary with
   alias) at top of file rather than inlining fully qualified names. This includes inside docblocks
   where referenced via `{@see TheThing}`.
 * Redundant parentheses should be used in complex expressions to clarify precedence for readers of
