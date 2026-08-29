@@ -10,12 +10,15 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SubstancePHP\HTTP\Exception\RenderingException\MissingLayoutException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingPartialException;
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 use TestUtil\TestUtil;
 
 #[CoversClass(HtmlRenderer::class)]
 #[CoversMethod(HtmlRenderer::class, 'render')]
+#[CoversMethod(HtmlRenderer::class, 'layout')]
+#[CoversMethod(HtmlRenderer::class, 'content')]
 #[CoversMethod(HtmlRenderer::class, 'e')]
 #[CoversMethod(HtmlRenderer::class, 'raw')]
 #[CoversMethod(HtmlRenderer::class, 'h')]
@@ -39,7 +42,7 @@ class HtmlRendererTest extends TestCase
             'unsafeWord' => '<b>bolded</b>',
         ];
         $expectedOutput = <<<HTML
-        <!DOCTYPE html>
+        <div id="layout"><!DOCTYPE html>
         <html lang="en">
         <body>
             <p>Hello, world</p>
@@ -47,6 +50,7 @@ class HtmlRendererTest extends TestCase
             <p>Escaped: &lt;b&gt;bolded&lt;/b&gt;</p>
         </body>
         </html>
+        </div>
         HTML;
 
         $this->assertSame(\trim($expectedOutput), \trim($this->makeRenderer($data)->render()));
@@ -60,7 +64,7 @@ class HtmlRendererTest extends TestCase
             'unsafeWord' => "\xff",
         ];
         $expectedOutput = <<<HTML
-        <!DOCTYPE html>
+        <div id="layout"><!DOCTYPE html>
         <html lang="en">
         <body>
             <p>Hello, world</p>
@@ -68,6 +72,7 @@ class HtmlRendererTest extends TestCase
             <p>Escaped: \u{FFFD}</p>
         </body>
         </html>
+        </div>
         HTML;
 
         $this->assertSame(\trim($expectedOutput), \trim($this->makeRenderer($data)->render()));
@@ -257,22 +262,124 @@ class HtmlRendererTest extends TestCase
     public function renderDataKeysCannotCollideWithEngineState(): void
     {
         $renderer = new HtmlRenderer(
-            TestUtil::getFixtureRoot() . '/template/collision-view.html.php',
-            ['started' => 'user-started', 'result' => 'user-result'],
-            new Escaper('utf-8'),
-            TestUtil::getFixtureRoot() . '/template',
+            templatePath: TestUtil::getFixtureRoot() . '/template/collision-view.html.php',
+            data: ['started' => 'user-started', 'result' => 'user-result'],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
         );
-        $this->assertSame('user-started|user-result', \trim($renderer->render()));
+        $this->assertSame(
+            '<div id="layout">user-started|user-result</div>',
+            \trim($renderer->render()),
+        );
+    }
+
+    #[Test]
+    public function renderAppliesDeclaredLayout(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/declared-layout-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $out = $renderer->render();
+        $this->assertStringContainsString('<title>My Site</title>', $out);
+        $this->assertStringContainsString('<p>view body</p>', $out);
+        $this->assertStringNotContainsString('<div id="layout">', $out);
+    }
+
+    #[Test]
+    public function renderStacksLayouts(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/stacked-layout-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $out = $renderer->render();
+        $this->assertStringContainsString('(outer:', $out);
+        $this->assertStringContainsString('[inner:', $out);
+        $this->assertStringContainsString('<p>view body</p>', $out);
+    }
+
+    #[Test]
+    public function renderThrowsWhenDeclaredLayoutMissing(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/missing-layout-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $this->expectException(MissingLayoutException::class);
+        $this->expectExceptionMessage('nonexistent');
+        $renderer->render();
+    }
+
+    #[Test]
+    public function renderThrowsWhenDefaultLayoutMissing(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/dummy-vars.html.php',
+            data: ['word' => 'world', 'unsafeWord' => 'x'],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+            defaultLayout: 'does-not-exist',
+        );
+        $this->expectException(MissingLayoutException::class);
+        $this->expectExceptionMessage('does-not-exist');
+        $renderer->render();
+    }
+
+    #[Test]
+    public function renderThrowsOnCircularLayoutDeclaration(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/cyclic-layout-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Circular layout declaration: cyclic');
+        $renderer->render();
+    }
+
+    #[Test]
+    public function partialCannotChangeTheEnclosingLayout(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/meddling-partial-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $out = $renderer->render();
+        $this->assertStringContainsString('<div id="layout">', $out);
+        $this->assertStringContainsString('<p>meddled</p>', $out);
+    }
+
+    #[Test]
+    public function contentReturnsEmptyStringFromAView(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/content-in-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $this->assertStringContainsString('[]', $renderer->render());
     }
 
     /** @param array<array-key, mixed> $data */
     private function makeRenderer(array $data = []): HtmlRenderer
     {
         return new HtmlRenderer(
-            TestUtil::getFixtureRoot() . '/template/dummy-vars.html.php',
-            $data,
-            new Escaper('utf-8'),
-            TestUtil::getFixtureRoot() . '/template',
+            templatePath: TestUtil::getFixtureRoot() . '/template/dummy-vars.html.php',
+            data: $data,
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
         );
     }
 }

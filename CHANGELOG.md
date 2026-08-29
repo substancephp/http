@@ -5,6 +5,11 @@
 * `HtmlRenderer` supports partials: `$this->partial('name', $data)` renders
   `{templateRoot}/partials/name.html.php` with only the passed data, returning the output as a
   string; a missing partial throws `MissingPartialException`.
+* `HtmlRenderer` supports layouts: a view declares `$this->layout('name', $data)` and the layout
+  renders after it, reading the view's output via `$this->content()`; layouts may stack. Views that
+  declare no layout are wrapped in the default layout, configurable via `substance.default-layout`
+  (default `layout`). A missing layout (declared or default) throws `MissingLayoutException`, so
+  HTML rendering requires the default layout file to exist.
 
 ### v0.5.0
 

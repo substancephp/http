@@ -49,6 +49,8 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
  * - a call to PHP's `htmlspecialchars()` or `htmlentities()`;
  * - the return value of {@see HtmlRenderer::partial()}, since a partial is
  *   itself a template responsible for escaping its own output;
+ * - the return value of {@see HtmlRenderer::content()} inside a layout, since
+ *   it is the already-rendered output of the template layer beneath;
  * - a concatenation, ternary or null-coalescing expression, or an
  *   interpolated string, made only of safe parts;
  * - a `printf()`/`vprintf()` call with a literal format string whose
@@ -223,6 +225,10 @@ final class UnescapedOutputChecker
         // A partial renders its own template, which is responsible for escaping its own output, so
         // echoing the rendered partial is safe.
         if ($name === 'partial') {
+            return self::SAFE;
+        }
+        // content() emits the output of the template layer beneath, which is itself checked.
+        if ($name === 'content') {
             return self::SAFE;
         }
 

@@ -15,6 +15,7 @@ class RendererFactory implements RendererFactoryInterface
     public function __construct(
         private string $templateRoot,
         private string $htmlEncoding,
+        private string $defaultLayout = 'layout',
     ) {
     }
 
@@ -30,7 +31,13 @@ class RendererFactory implements RendererFactoryInterface
         if (\str_starts_with($responseContentType, 'text/html')) {
             $templatePath = "{$this->templateRoot}/{$normalizedRequestPath}.html.php";
             $escaper = new Escaper($this->htmlEncoding);
-            return new HtmlRenderer($templatePath, $responseData, $escaper, $this->templateRoot);
+            return new HtmlRenderer(
+                templatePath: $templatePath,
+                data: $responseData,
+                escaper: $escaper,
+                templateRoot: $this->templateRoot,
+                defaultLayout: $this->defaultLayout,
+            );
         }
         return new EmptyRenderer();
     }

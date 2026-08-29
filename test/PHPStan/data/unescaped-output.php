@@ -31,3 +31,4 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 <p><?= sprintf('%s', $name) ?></p>
 <p><?= $name . $count ?></p>
 <p><?= $this->partial('share', ['name' => $name]) ?></p>
+<p><?= $this->content() ?></p>
