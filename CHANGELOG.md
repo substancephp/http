@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.7.0
+
+* `HtmlRenderer` now supports slots and custom elements.
+
 ### v0.6.0
 
 * `HtmlRenderer` now supports layouts and partials.

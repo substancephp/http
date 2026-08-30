@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SubstancePHP\HTTP\Exception\RenderingException\MissingElementException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingLayoutException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingPartialException;
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
@@ -19,6 +20,13 @@ use TestUtil\TestUtil;
 #[CoversMethod(HtmlRenderer::class, 'render')]
 #[CoversMethod(HtmlRenderer::class, 'layout')]
 #[CoversMethod(HtmlRenderer::class, 'content')]
+#[CoversMethod(HtmlRenderer::class, 'start')]
+#[CoversMethod(HtmlRenderer::class, 'append')]
+#[CoversMethod(HtmlRenderer::class, 'prepend')]
+#[CoversMethod(HtmlRenderer::class, 'stop')]
+#[CoversMethod(HtmlRenderer::class, 'fetch')]
+#[CoversMethod(HtmlRenderer::class, 'beginElement')]
+#[CoversMethod(HtmlRenderer::class, 'endElement')]
 #[CoversMethod(HtmlRenderer::class, 'e')]
 #[CoversMethod(HtmlRenderer::class, 'raw')]
 #[CoversMethod(HtmlRenderer::class, 'h')]
@@ -370,6 +378,141 @@ class HtmlRendererTest extends TestCase
             templateRoot: TestUtil::getFixtureRoot() . '/template',
         );
         $this->assertStringContainsString('[]', $renderer->render());
+    }
+
+    #[Test]
+    public function slotsFlowThroughToTheLayout(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/slot-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $out = $renderer->render();
+        $this->assertStringContainsString('[<p>sidebar content</p>]', $out);
+        $this->assertStringContainsString(
+            '<scripts><script>0</script><script>a</script><script>b</script></scripts>',
+            $out,
+        );
+        $this->assertStringContainsString('<empty></empty>', $out);
+        $this->assertStringContainsString('<replace><p>second</p></replace>', $out);
+        $this->assertStringContainsString('<p>body</p>', $out);
+    }
+
+    #[Test]
+    public function slotsFetchFallsBackWhenNeverFilled(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/no-slot-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $out = $renderer->render();
+        $this->assertStringContainsString('[fallback]', $out);
+        $this->assertStringContainsString('<scripts></scripts>', $out);
+        $this->assertStringContainsString('<empty>FALLBACK</empty>', $out);
+    }
+
+    #[Test]
+    public function stopWithoutCaptureThrows(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/stray-stop-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('stop() called with no open capture');
+        $renderer->render();
+    }
+
+    #[Test]
+    public function elementRendersBodyAndParams(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/element-card-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $out = $renderer->render();
+        $this->assertStringContainsString('<div class="card"><h2>Hi</h2>', $out);
+        $this->assertStringContainsString('<p>card body</p>', $out);
+    }
+
+    #[Test]
+    public function elementSubSlotsAreScopedToTheirInstance(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/two-panels-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $out = $renderer->render();
+        // each element renders only its own sub-slot, and the page slot holds only the page footer
+        $this->assertSame(1, \substr_count($out, '[<p>footer A</p>]'));
+        $this->assertSame(1, \substr_count($out, '[<p>footer B</p>]'));
+        $this->assertSame(1, \substr_count($out, '[page:<p>page footer</p>]'));
+    }
+
+    #[Test]
+    public function elementsNest(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/nested-elements-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $out = $renderer->render();
+        $this->assertStringContainsString('<div class="card"><h2>Nested</h2>', $out);
+        $this->assertStringContainsString('<div class="panel"><p>inner</p>[none]</div>', $out);
+    }
+
+    #[Test]
+    public function elementThrowsWhenTemplateMissing(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/missing-element-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $this->expectException(MissingElementException::class);
+        $this->expectExceptionMessage('nonexistent');
+        $renderer->render();
+    }
+
+    #[Test]
+    public function elementRethrowsErrorsFromTheElementItself(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/element-error-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('boom');
+        $renderer->render();
+    }
+
+    #[Test]
+    public function endElementWithoutBeginThrows(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/stray-end-element-view.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+        );
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('endElement() called with no open element');
+        $renderer->render();
     }
 
     /** @param array<array-key, mixed> $data */

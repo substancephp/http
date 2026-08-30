@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SubstancePHP\HTTP\Renderer;
 
 use Laminas\Escaper\Escaper;
+use SubstancePHP\HTTP\Exception\RenderingException\MissingElementException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingLayoutException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingPartialException;
 use SubstancePHP\HTTP\RendererInterface;
@@ -53,6 +54,24 @@ class HtmlRenderer implements RendererInterface
      * @var string[]
      */
     private array $contentStack = [];
+
+    /**
+     * @internal transient: stack of slot maps; the bottom scope is the page scope.
+     * @var array<string, string>[]
+     */
+    private array $slotScopes = [[]];
+
+    /**
+     * @internal transient: open slot captures, each a `[name, mode]` pair.
+     * @var array{string, string}[]
+     */
+    private array $sectionStack = [];
+
+    /**
+     * @internal transient: open elements, each with its name and params.
+     * @var array{name: string, params: array<string, mixed>}[]
+     */
+    private array $elementStack = [];
 
     /** @deprecated Use {@see self::h()} instead */
     public function e(mixed $content): mixed
@@ -138,6 +157,120 @@ class HtmlRenderer implements RendererInterface
     {
         $count = \count($this->contentStack);
         return $count == 0 ? '' : (string) $this->contentStack[$count - 1];
+    }
+
+    /** Starts capturing output into the named slot of the current scope, replacing any previous value. */
+    public function start(string $name): void
+    {
+        $this->beginCapture($name, 'set');
+    }
+
+    /** Starts capturing output to append to the named slot of the current scope. */
+    public function append(string $name): void
+    {
+        $this->beginCapture($name, 'append');
+    }
+
+    /** Starts capturing output to prepend to the named slot of the current scope. */
+    public function prepend(string $name): void
+    {
+        $this->beginCapture($name, 'prepend');
+    }
+
+    private function beginCapture(string $name, string $mode): void
+    {
+        $this->sectionStack[] = [$name, $mode];
+        \ob_start();
+    }
+
+    /**
+     * Ends the innermost open capture and stores it in the named slot of the current scope.
+     *
+     * @throws \LogicException if there is no open capture
+     */
+    public function stop(): void
+    {
+        $capture = \array_pop($this->sectionStack);
+        if ($capture === null) {
+            throw new \LogicException('stop() called with no open capture');
+        }
+        [$name, $mode] = $capture;
+        $out = (string) \ob_get_clean();
+        $scopeIndex = \count($this->slotScopes) - 1;
+        $existing = $this->slotScopes[$scopeIndex][$name] ?? '';
+        $this->slotScopes[$scopeIndex][$name] = match ($mode) {
+            'append' => $existing . $out,
+            'prepend' => $out . $existing,
+            default => $out,
+        };
+    }
+
+    /**
+     * The named slot of the current scope, or $default if the slot was never filled. An explicitly
+     * empty slot stays empty.
+     */
+    public function fetch(string $name, ?string $default = null): string
+    {
+        $scope = $this->slotScopes[\count($this->slotScopes) - 1];
+        return $scope[$name] ?? $default ?? '';
+    }
+
+    /**
+     * Starts the element named at the call site, capturing its body until {@see self::endElement()}.
+     *
+     * @param array<string, mixed> $params passed to the element template as plain variables
+     */
+    public function beginElement(string $name, array $params = []): void
+    {
+        $this->elementStack[] = ['name' => $name, 'params' => $params];
+        $this->slotScopes[] = [];
+        \ob_start();
+    }
+
+    /**
+     * Ends the innermost element: renders its template with the captured body as {@see self::content()}
+     * and the element's sub-slots via {@see self::fetch()}.
+     *
+     * @throws \LogicException if there is no open element, or an unclosed slot capture
+     * @throws MissingElementException if the element template file does not exist
+     */
+    public function endElement(): void
+    {
+        $element = \array_pop($this->elementStack);
+        if ($element === null) {
+            throw new \LogicException('endElement() called with no open element');
+        }
+        if (\count($this->sectionStack) > 0) {
+            throw new \LogicException('endElement() called with an unclosed capture');
+        }
+        $body = (string) \ob_get_clean();
+        // Every open element pushed exactly one slot scope, so the pop below cannot be null.
+        $subslots = \array_pop($this->slotScopes);
+        \assert($subslots !== null);
+        $this->contentStack[] = $body;
+        // Re-push the element's own scope so its template can fetch() its sub-slots.
+        $this->slotScopes[] = $subslots;
+        // An element must not be able to change the layout of the template that contains it.
+        $savedLayout = [$this->layoutSet, $this->layoutName, $this->layoutData];
+        try {
+            $path = "{$this->templateRoot}/elements/{$element['name']}.html.php";
+            try {
+                $rendered = $this->renderFile($path, $element['params']);
+            } catch (\Error $e) {
+                // Only a missing file is a MissingElementException; any other \Error (e.g. from the
+                // element's own code) is rethrown as is.
+                if (! \is_file($path)) {
+                    throw new MissingElementException($path);
+                }
+                throw $e;
+            }
+            // The element template's output is already-rendered markup, so echo it unescaped.
+            echo $this->raw(\rtrim($rendered));
+        } finally {
+            [$this->layoutSet, $this->layoutName, $this->layoutData] = $savedLayout;
+            \array_pop($this->slotScopes);
+            \array_pop($this->contentStack);
+        }
     }
 
     /**
@@ -263,6 +396,9 @@ class HtmlRenderer implements RendererInterface
     {
         $this->layoutSet = false;
         $this->contentStack = [];
+        $this->slotScopes = [[]];
+        $this->sectionStack = [];
+        $this->elementStack = [];
         $out = $this->renderFile($this->templatePath, $this->data);
         $layout = $this->layoutSet ? [$this->layoutName, $this->layoutData] : [$this->defaultLayout, []];
         $visited = [];

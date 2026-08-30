@@ -32,3 +32,4 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 <p><?= $name . $count ?></p>
 <p><?= $this->partial('share', ['name' => $name]) ?></p>
 <p><?= $this->content() ?></p>
+<p><?= $this->fetch('footer') ?></p>
