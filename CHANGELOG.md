@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### v0.7.1
+
+* Dependency version upgrades.
+
 ### v0.7.0
 
 * `HtmlRenderer` now supports slots and custom elements.

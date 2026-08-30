@@ -34,7 +34,7 @@
         "psr/http-factory": "^1.1",
         "psr/http-server-handler": "^1.0",
         "psr/http-server-middleware": "^1.0",
-        "substancephp/container": "v0.6.1",
+        "substancephp/container": "^0.6.2",
         "psr/log": "^3.0",
         "laminas/laminas-escaper": "^2.18",
         "nikic/php-parser": "^5.0"
