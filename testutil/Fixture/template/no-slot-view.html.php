@@ -1,0 +1,9 @@
+<?php
+
+use SubstancePHP\HTTP\Renderer\HtmlRenderer;
+
+/** @var HtmlRenderer $this */
+?>
+
+<?php $this->layout('slot-layout'); ?>
+<p>body</p>

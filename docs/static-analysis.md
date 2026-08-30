@@ -41,18 +41,19 @@ or provable number/boolean, the result of a renderer escape method (the short
 forms `h()`, `a()`, `j()`, `c()`, `u()`, or the long forms `escapeHtml()`,
 `escapeHtmlAttr()`, `escapeJs()`, `escapeCss()`, `escapeUrl()`, or the
 deprecated `e()`), of `htmlspecialchars()`/`htmlentities()`, of `raw()`
-(see below), or of `partial()`/`content()` (each emits the rendered output
-of another template, which is itself checked), or a concatenation, ternary,
-null-coalescing or interpolated string built from safe parts, optionally
-including `raw()`. Anything the rules cannot clearly classify — for example
-a dynamic call — is best effort: it may or may not be flagged.
+(see below), or of `partial()`/`content()`/`fetch()` (each emits the rendered
+output of another template, which is itself checked), or a concatenation,
+ternary, null-coalescing or interpolated string built from safe parts,
+optionally including `raw()`. Anything the rules cannot clearly classify —
+for example a dynamic call — is best effort: it may or may not be flagged.
 
-Partials and layouts are themselves templates, so the rules check them
-exactly like any other: each must type `$this` as `HtmlRenderer` and escape
-its own output. Echoing a partial's result with `<?= $this->partial('name') ?>`
-or a layout's inner output with `<?= $this->content() ?>` is treated as
-safe, since the underlying templates are responsible for escaping their own
-output.
+Partials, layouts and slots are all filled by templates, so the rules check
+those templates exactly like any other: each must type `$this` as
+`HtmlRenderer` and escape its own output. Echoing a partial's result with
+`<?= $this->partial('name') ?>`, a layout's inner output with
+`<?= $this->content() ?>`, or a slot's captured output with
+`<?= $this->fetch('name') ?>` is treated as safe, since the underlying
+templates are responsible for escaping their own output.
 
 ## Outputting content deliberately unescaped
 

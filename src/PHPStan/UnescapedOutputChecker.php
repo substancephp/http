@@ -51,6 +51,8 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
  *   itself a template responsible for escaping its own output;
  * - the return value of {@see HtmlRenderer::content()} inside a layout, since
  *   it is the already-rendered output of the template layer beneath;
+ * - the return value of {@see HtmlRenderer::fetch()}, since it is captured
+ *   output of the templates that filled the slot;
  * - a concatenation, ternary or null-coalescing expression, or an
  *   interpolated string, made only of safe parts;
  * - a `printf()`/`vprintf()` call with a literal format string whose
@@ -219,19 +221,16 @@ final class UnescapedOutputChecker
         if (isset(self::ESCAPE_METHODS[$name])) {
             return self::SAFE;
         }
-        if ($name === 'raw') {
-            return self::RAW;
-        }
-        // A partial renders its own template, which is responsible for escaping its own output, so
-        // echoing the rendered partial is safe.
-        if ($name === 'partial') {
-            return self::SAFE;
-        }
-        // content() emits the output of the template layer beneath, which is itself checked.
-        if ($name === 'content') {
-            return self::SAFE;
-        }
 
+        switch ($name) {
+            case 'raw':
+                return self::RAW;
+            case 'partial':
+            case 'content':
+            case 'fetch':
+                // These methods emit the already-rendered output of other templates, which are checked.
+                return self::SAFE;
+        }
         return self::UNSAFE;
     }
 
