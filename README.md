@@ -27,8 +27,17 @@ This project steers away from:
 
 TODO
 
-## Detailed documentation
+## Table of contents
 
-* [Static analysis: catching unescaped output](docs/static-analysis.md) — a
-  best-effort PHPStan extension bundled with this package that flags
-  unescaped output in HTML templates (a lint aid, not a security guarantee).
+* [Templating](docs/templating.md)
+* [Static analysis: catching unescaped output](docs/static-analysis.md)
+
+The following feature docs are planned but not yet written:
+
+* Routing (TODO)
+* Actions (TODO)
+* Middleware (TODO)
+* Application setup (TODO)
+* Requests and parameters (TODO)
+* Responses and content types (TODO)
+* Error handling (TODO)
