@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SubstancePHP\HTTP;
 
 use Laminas\Escaper\Escaper;
-use SubstancePHP\HTTP\Renderer\EmptyRenderer;
+use SubstancePHP\HTTP\Exception\RenderingException\UnsupportedContentTypeException;
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 use SubstancePHP\HTTP\Renderer\JsonRenderer;
 
@@ -39,6 +39,6 @@ class RendererFactory implements RendererFactoryInterface
                 defaultLayout: $this->defaultLayout,
             );
         }
-        return new EmptyRenderer();
+        throw new UnsupportedContentTypeException($responseContentType);
     }
 }

@@ -6,5 +6,6 @@ use SubstancePHP\HTTP\RequestParams\PathParams;
 use SubstancePHP\HTTP\Respond;
 
 return static function (PathParams $params, Respond $respond): mixed {
-    return $respond(200, ['id' => $params['id']], 'text/html');
+    $respond->setHeader('Content-Type', 'text/html');
+    return $respond(200, ['id' => $params['id']]);
 };

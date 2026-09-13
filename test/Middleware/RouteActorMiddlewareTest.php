@@ -33,7 +33,13 @@ class RouteActorMiddlewareTest extends TestCase
     {
         $container = $this->createMock(ContainerInterface::class);
         $contextFactory = $this->createStub(ContextFactoryInterface::class);
-        $context = Container::from([Respond::class => fn () => new Respond(200, 'application/json')]);
+        $context = Container::from([
+            Respond::class => function () {
+                $respond = new Respond(200);
+                $respond->setHeader('Content-Type', 'application/json');
+                return $respond;
+            },
+        ]);
         $contextFactory->method('createContext')->willReturn($context);
         $responseFactory = new ResponseFactory();
         $templateRoot = TestUtil::getFixtureRoot() . '/template';
@@ -91,7 +97,11 @@ class RouteActorMiddlewareTest extends TestCase
         // is resolved from the route's declared path, with the captured param available in the data.
         $context = Container::from([
             PathParams::class => fn () => PathParams::fromRequest($request),
-            Respond::class => fn () => new Respond(200, 'application/json'),
+            Respond::class => function () {
+                $respond = new Respond(200);
+                $respond->setHeader('Content-Type', 'application/json');
+                return $respond;
+            },
         ]);
         $contextFactory = $this->createStub(ContextFactoryInterface::class);
         $contextFactory->method('createContext')->willReturn($context);
@@ -163,5 +173,107 @@ class RouteActorMiddlewareTest extends TestCase
         $response = $instance->process($request, $requestHandler);
         $this->assertSame(422, $response->getStatusCode());
         $this->assertSame('{"message":"Invalid request body"}', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function processHappyPathCustomHeaders(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $requestHandler = $this->createMock(RequestHandler::class);
+        $instance = $this->makeInstance();
+
+        $route = Route::from(
+            actionRoot: TestUtil::getActionFixtureRoot(),
+            method: 'GET',
+            path: '/custom-headers',
+        );
+        \assert($route instanceof Route);
+
+        $request = $requestFactory
+            ->createServerRequest('GET', '/custom-headers')
+            ->withAttribute(Route::class, $route);
+
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('one', $response->getHeaderLine('X-Single'));
+        $this->assertSame(['a', 'b'], $response->getHeader('X-Multi'));
+        $this->assertSame('{"data":{"ok":true}}', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function processHappyPathRedirect(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $requestHandler = $this->createMock(RequestHandler::class);
+        $instance = $this->makeInstance();
+
+        $route = Route::from(
+            actionRoot: TestUtil::getActionFixtureRoot(),
+            method: 'GET',
+            path: '/redirect',
+        );
+        \assert($route instanceof Route);
+
+        $request = $requestFactory
+            ->createServerRequest('GET', '/redirect')
+            ->withAttribute(Route::class, $route);
+
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(303, $response->getStatusCode());
+        $this->assertSame('/stores/new', $response->getHeaderLine('Location'));
+        // Removing the content type means no body is rendered and no content type is emitted.
+        $this->assertFalse($response->hasHeader('Content-Type'));
+        $this->assertEmpty((string) $response->getBody());
+    }
+
+    #[Test]
+    public function processHappyPathNoContentKeepsHeaders(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $requestHandler = $this->createMock(RequestHandler::class);
+        $instance = $this->makeInstance();
+
+        $route = Route::from(
+            actionRoot: TestUtil::getActionFixtureRoot(),
+            method: 'GET',
+            path: '/no-content-with-header',
+        );
+        \assert($route instanceof Route);
+
+        $request = $requestFactory
+            ->createServerRequest('GET', '/no-content-with-header')
+            ->withAttribute(Route::class, $route);
+
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(204, $response->getStatusCode());
+        $this->assertSame('no-store', $response->getHeaderLine('Cache-Control'));
+        $this->assertFalse($response->hasHeader('Content-Type'));
+        $this->assertEmpty((string) $response->getBody());
+    }
+
+    #[Test]
+    public function processHappyPathNoContentTypeIsBodyless(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $requestHandler = $this->createMock(RequestHandler::class);
+        $instance = $this->makeInstance();
+
+        $route = Route::from(
+            actionRoot: TestUtil::getActionFixtureRoot(),
+            method: 'GET',
+            path: '/no-content-type',
+        );
+        \assert($route instanceof Route);
+
+        $request = $requestFactory
+            ->createServerRequest('GET', '/no-content-type')
+            ->withAttribute(Route::class, $route);
+
+        // With no `Content-Type`, no renderer runs: the response is bodyless, not an error (it would
+        // be an UnsupportedContentTypeException if an unrecognised content type were still set).
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertFalse($response->hasHeader('Content-Type'));
+        $this->assertEmpty((string) $response->getBody());
     }
 }

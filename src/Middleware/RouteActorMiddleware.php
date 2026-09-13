@@ -22,6 +22,11 @@ use SubstancePHP\HTTP\Route;
  * This middleware assumes there is a {@see Route} stored on the request it is processing. It uses the
  * information in the {@see Route} to handle the "meat" of the request. This will typically involve running
  * the route's callback, converting its return value into an HTTP response, and returning the latter.
+ *
+ * The response is materialized from the request-scoped {@see Respond} (its status code and headers)
+ * together with the value the action returned. If the status code forbids a body (1xx, 204, 304) or the
+ * action removed the `Content-Type` header, no renderer runs and no `Content-Type` is emitted; otherwise
+ * the `Content-Type` header selects the renderer that turns the returned value into the body.
  */
 readonly class RouteActorMiddleware implements MiddlewareInterface
 {
@@ -53,23 +58,40 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
 
         /** @var Respond $respond */
         $respond = $context->get(Respond::class);
-        $statusCode = $respond->statusCode;
-        $contentType = $respond->contentType;
+        $statusCode = $respond->getStatusCode();
+        $contentType = $respond->getHeaderLine('Content-Type');
 
-        if ($statusCode == 204) {
-            return $this->responseFactory->createResponse($statusCode);
+        // A response has no body when its status code forbids one, or when the action removed the
+        // `Content-Type` header (as {@see Respond::redirectTo()} does). In that case no renderer runs
+        // and no `Content-Type` is emitted, though any other headers the action set are still applied.
+        $bodyless = self::isBodylessStatus($statusCode) || ($contentType === '');
+
+        $response = $this->responseFactory->createResponse($statusCode);
+        foreach ($respond->getHeaders() as $name => $values) {
+            if ($bodyless && (\strcasecmp($name, 'Content-Type') == 0)) {
+                continue;
+            }
+            $response = $response->withHeader($name, $values);
         }
-
-        $response = $this->responseFactory
-            ->createResponse($statusCode)
-            ->withHeader('Content-Type', $contentType);
-        $renderer = $this->rendererFactory->createRenderer(
-            $route->normalizedPath,
-            $contentType,
-            $responseData,
-        );
-        $responseContent = $renderer->render();
-        $response->getBody()->write($responseContent);
+        if (! $bodyless) {
+            $renderer = $this->rendererFactory->createRenderer(
+                $route->normalizedPath,
+                $contentType,
+                $responseData,
+            );
+            $response->getBody()->write($renderer->render());
+        }
         return $response;
+    }
+
+    /**
+     * Whether the given status code forbids a response body per HTTP semantics: informational (1xx),
+     * `204 No Content` and `304 Not Modified`.
+     */
+    private static function isBodylessStatus(int $statusCode): bool
+    {
+        return (($statusCode >= 100) && ($statusCode < 200))
+            || ($statusCode === 204)
+            || ($statusCode === 304);
     }
 }

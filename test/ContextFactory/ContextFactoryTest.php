@@ -45,7 +45,12 @@ class ContextFactoryTest extends TestCase
         $this->assertInstanceOf(ServerParams::class, $context->get(ServerParams::class));
         $this->assertInstanceOf(BodyParams::class, $context->get(BodyParams::class));
         $this->assertInstanceOf(PathParams::class, $context->get(PathParams::class));
-        $this->assertInstanceOf(Respond::class, $context->get(Respond::class));
+
+        $respond = $context->get(Respond::class);
+        $this->assertInstanceOf(Respond::class, $respond);
+        // A GET defaults to 200 and the configured default content type, seeded as a header.
+        $this->assertSame(200, $respond->getStatusCode());
+        $this->assertSame('application/json', $respond->getHeaderLine('Content-Type'));
 
         $this->assertSame('val', $context->get(ServerParams::class)['var']);
         $this->assertSame('there', $context->get(BodyParams::class)['hi']);

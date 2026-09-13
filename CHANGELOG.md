@@ -1,5 +1,75 @@
 # CHANGELOG
 
+### v0.8.0
+
+Major (breaking):
+* `Respond` now represents a response as a status code plus a set of response headers, rather than a
+  status code plus a single content type. Actions configure headers with `Respond::setHeader()` and
+  `Respond::removeHeader()`, or use `Respond::redirectTo()` to issue a redirect.
+* `Respond::__invoke()` no longer takes a content type: it is now
+  `__invoke(int $statusCode, mixed $data = null)`, returning the passed data. Set the content type as
+  a header instead.
+* `Respond::__construct()` no longer takes a content type; it takes only `int $statusCode`.
+* The content type is now carried as the `Content-Type` header and still selects the renderer that
+  turns the action's return value into the body. A response is bodyless when its status code forbids a
+  body (`1xx`, `204`, `304`) or when the action removes the `Content-Type` header.
+* The `EmptyRenderer` is retired; a content type with no renderer now throws
+  `UnsupportedContentTypeException`.
+
+#### Upgrading to 0.8.0
+
+An action that only did `return $respond($status, $data)` needs no changes. The steps below cover the
+code that did more than that.
+
+**1. Setting the content type.** `Respond::__invoke()` no longer accepts a content type as a third
+argument. Set the `Content-Type` header instead:
+
+```php
+// before
+return $respond(200, $data, 'application/json');
+
+// after
+$respond->setHeader('Content-Type', 'application/json');
+return $respond(200, $data);
+```
+
+**2. Constructing `Respond` directly.** The constructor now takes only the status code:
+
+```php
+// before
+$respond = new Respond(200, 'application/json');
+
+// after
+$respond = new Respond(200);
+$respond->setHeader('Content-Type', 'application/json');
+```
+
+**3. Reading `Respond`'s state.** `$statusCode` and `$contentType` are no longer public. Use the
+accessors instead:
+
+```php
+// before
+$status = $respond->statusCode;
+$type = $respond->contentType;
+
+// after
+$status = $respond->getStatusCode();
+$type = $respond->getHeaderLine('Content-Type');
+```
+
+**4. Unsupported content types now throw.** Previously any content type other than `application/json*`
+and `text/html*` produced an empty body (via the removed `EmptyRenderer`). `RendererFactory` now throws
+`SubstancePHP\HTTP\Exception\RenderingException\UnsupportedContentTypeException`. If you relied on that
+empty body, use a supported content type, or express "no body" explicitly by removing the `Content-Type`
+header (`$respond->removeHeader('Content-Type')`) or by returning a bodyless status (`1xx`, `204`,
+`304`).
+
+The `substance.http.default-content-type` container key is unchanged; it now seeds the default
+`Content-Type` header.
+
+New in 0.8.0: set arbitrary response headers with `setHeader()` / `removeHeader()` (pass an array for a
+multi-valued header such as `Set-Cookie`), and redirect with `return $respond->redirectTo('/path');`.
+
 ### v0.7.1
 
 * Dependency version upgrades.

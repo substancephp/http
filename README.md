@@ -30,6 +30,7 @@ TODO
 ## Table of contents
 
 * [Templating](docs/templating.md)
+* [Responses and redirects](docs/responses.md)
 * [Static analysis: catching unescaped output](docs/static-analysis.md)
 
 The following feature docs are planned but not yet written:
@@ -39,5 +40,4 @@ The following feature docs are planned but not yet written:
 * Middleware (TODO)
 * Application setup (TODO)
 * Requests and parameters (TODO)
-* Responses and content types (TODO)
 * Error handling (TODO)
