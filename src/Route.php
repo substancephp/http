@@ -3,6 +3,8 @@
 namespace SubstancePHP\HTTP;
 
 use SubstancePHP\Container\Container;
+use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
+use SubstancePHP\HTTP\Middleware\Engage;
 use SubstancePHP\HTTP\Middleware\Skip;
 use SubstancePHP\HTTP\RequestParams\PathParams;
 use Psr\Container\ContainerExceptionInterface;
@@ -52,8 +54,8 @@ class Route
     /** @var array<string, string> captured path parameters, keyed by the segment name declared in `[name]` */
     private readonly array $params;
 
-    /** @var string[] fully-qualified names of PSR-15 middleware classes this route should skip */
-    private ?array $skippableMiddlewares;
+    /** @var array{skip: array<string, true>, engage: array<string, true>}|null */
+    private ?array $middlewareDeclarations;
 
     /** @param array<string, string> $params the captured path parameters */
     private function __construct(callable $callback, string $normalizedPath, array $params)
@@ -61,7 +63,7 @@ class Route
         $this->callback = $callback(...);
         $this->normalizedPath = $normalizedPath;
         $this->params = $params;
-        $this->skippableMiddlewares = null;
+        $this->middlewareDeclarations = null;
     }
 
     /**
@@ -199,49 +201,101 @@ class Route
     }
 
     /**
-     * The route callback may be annotated with the Skip attribute, indicating that certain middlewares
-     * should be skipped when handling the route.
-     *
-     * When passed a fully qualified class name, this method returns true if and only if the corresponding
-     * middleware has been indicated in this way.
+     * The route callback may be annotated with {@see Skip} and/or {@see Engage}, controlling which
+     * middlewares run when handling the route: {@see Skip} causes the named middlewares to be skipped,
+     * while {@see Engage} causes the named middlewares to run even if they are disabled by default.
      *
      * @throws \ReflectionException
      */
     public function shouldSkip(string $middleware): bool
     {
-        return \in_array(
-            $middleware,
-            $this->skippableMiddlewares ??= $this->computeSkippableMiddlewares(),
-            true,
-        );
+        return isset($this->middlewareDeclarations()['skip'][$middleware]);
+    }
+
+    /**
+     * Whether the route opts the named middleware back in via {@see Engage}.
+     *
+     * @throws \ReflectionException
+     */
+    public function shouldEngage(string $middleware): bool
+    {
+        return isset($this->middlewareDeclarations()['engage'][$middleware]);
+    }
+
+    /**
+     * @return list<string> fully-qualified names of middlewares the route skips via {@see Skip}
+     * @throws \ReflectionException
+     */
+    public function skippedMiddlewares(): array
+    {
+        return \array_keys($this->middlewareDeclarations()['skip']);
+    }
+
+    /**
+     * @return list<string> fully-qualified names of middlewares the route engages via {@see Engage}
+     * @throws \ReflectionException
+     */
+    public function engagedMiddlewares(): array
+    {
+        return \array_keys($this->middlewareDeclarations()['engage']);
+    }
+
+    /** @return array{skip: array<string, true>, engage: array<string, true>} */
+    private function middlewareDeclarations(): array
+    {
+        return $this->middlewareDeclarations ??= $this->computeMiddlewareDeclarations();
+    }
+
+    /**
+     * @return array{skip: array<string, true>, engage: array<string, true>}
+     * @throws \ReflectionException
+     * @throws InvalidMiddlewareException if the same middleware is declared both skipped and engaged, or
+     *   declared more than once in a single attribute.
+     */
+    private function computeMiddlewareDeclarations(): array
+    {
+        $skip = [];
+        $engage = [];
+        $reflectionFunction = new \ReflectionFunction($this->callback);
+        foreach ($reflectionFunction->getAttributes() as $reflectionAttribute) {
+            if ($reflectionAttribute->getName() === Skip::class) {
+                $attribute = $reflectionAttribute->newInstance();
+                \assert($attribute instanceof Skip);
+                self::declare($skip, $attribute->skippableMiddlewares, 'Skip');
+            } elseif ($reflectionAttribute->getName() === Engage::class) {
+                $attribute = $reflectionAttribute->newInstance();
+                \assert($attribute instanceof Engage);
+                self::declare($engage, $attribute->engagedMiddlewares, 'Engage');
+            }
+        }
+        $conflicts = \array_intersect_key($skip, $engage);
+        if ($conflicts !== []) {
+            throw new InvalidMiddlewareException(
+                'Middleware declared both #[Skip] and #[Engage]: ' . \implode(', ', \array_keys($conflicts)),
+            );
+        }
+        return ['skip' => $skip, 'engage' => $engage];
+    }
+
+    /**
+     * @param array<string, true> &$declarations
+     * @param array<string> $middlewares
+     * @throws InvalidMiddlewareException if a middleware is declared more than once
+     */
+    private static function declare(array &$declarations, array $middlewares, string $attribute): void
+    {
+        foreach ($middlewares as $middleware) {
+            if (isset($declarations[$middleware])) {
+                throw new InvalidMiddlewareException("Duplicate {$attribute} declaration for: {$middleware}");
+            }
+            $declarations[$middleware] = true;
+        }
     }
 
     /** @return array<string, string> the captured path parameters, keyed by their `[name]` declaration */
     public function getParams(): array
     {
         return $this->params;
-    }
-
-    /**
-     * @return array<string> fully-qualified class names of middlewares that should be skipped in handling
-     *   this route
-     * @throws \ReflectionException
-     */
-    private function computeSkippableMiddlewares(): array
-    {
-        $skippableMiddlewares = [];
-        $reflectionFunction = new \ReflectionFunction($this->callback);
-        $reflectionAttributes = $reflectionFunction->getAttributes();
-        foreach ($reflectionAttributes as $reflectionAttribute) {
-            if ($reflectionAttribute->getName() === Skip::class) {
-                $attribute = $reflectionAttribute->newInstance();
-                \assert($attribute instanceof Skip);
-                foreach ($attribute->skippableMiddlewares as $skippableMiddleware) {
-                    $skippableMiddlewares[] = $skippableMiddleware;
-                }
-            }
-        }
-        return $skippableMiddlewares;
     }
 
     /**

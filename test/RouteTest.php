@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\ContextFactory;
+use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
 use SubstancePHP\HTTP\Route;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
@@ -21,6 +22,9 @@ use TestUtil\TestUtil;
 #[CoversMethod(Route::class, 'from')]
 #[CoversMethod(Route::class, 'getParams')]
 #[CoversMethod(Route::class, 'shouldSkip')]
+#[CoversMethod(Route::class, 'shouldEngage')]
+#[CoversMethod(Route::class, 'skippedMiddlewares')]
+#[CoversMethod(Route::class, 'engagedMiddlewares')]
 #[CoversMethod(Route::class, 'execute')]
 class RouteTest extends TestCase
 {
@@ -67,6 +71,43 @@ class RouteTest extends TestCase
         $this->assertTrue($route->shouldSkip(ExampleMiddlewareA::class));
         $this->assertFalse($route->shouldSkip(ExampleMiddlewareB::class));
         $this->assertFalse($route->shouldSkip('bye'));
+        $this->assertSame(
+            [ExampleMiddlewareA::class, ExampleMiddlewareC::class],
+            $route->skippedMiddlewares(),
+        );
+        $this->assertSame([], $route->engagedMiddlewares());
+    }
+
+    #[Test]
+    public function shouldEngage(): void
+    {
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-engage');
+        \assert($route instanceof Route);
+
+        $this->assertTrue($route->shouldEngage(ExampleMiddlewareB::class));
+        $this->assertFalse($route->shouldEngage(ExampleMiddlewareA::class));
+        $this->assertSame([ExampleMiddlewareB::class], $route->engagedMiddlewares());
+        $this->assertSame([], $route->skippedMiddlewares());
+    }
+
+    #[Test]
+    public function conflictingDeclarationsThrow(): void
+    {
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-conflict');
+        \assert($route instanceof Route);
+
+        $this->expectException(InvalidMiddlewareException::class);
+        $route->shouldSkip(ExampleMiddlewareA::class);
+    }
+
+    #[Test]
+    public function duplicateDeclarationsThrow(): void
+    {
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-duplicate');
+        \assert($route instanceof Route);
+
+        $this->expectException(InvalidMiddlewareException::class);
+        $route->shouldSkip(ExampleMiddlewareA::class);
     }
 
     #[Test]

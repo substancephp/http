@@ -16,6 +16,15 @@ Major (breaking):
 * The `EmptyRenderer` is retired; a content type with no renderer now throws
   `UnsupportedContentTypeException`.
 
+Minor:
+* Middleware can be registered but disabled by default: pass a `MiddlewareSpec::disable()` in place of
+  a bare class name in `Application::make()`'s middleware list (e.g.
+  `[A::class, MiddlewareSpec::disable(B::class), C::class]`). A route opts it back in with the new
+  `#[Engage]` attribute, the inverse of `#[Skip]`.
+* Inconsistent middleware declarations now throw `InvalidMiddlewareException`: the same middleware
+  declared both skipped and engaged, or twice in one attribute; a route referencing a middleware that
+  is not registered; or the same middleware registered twice in the stack.
+
 #### Upgrading to 0.8.0
 
 An action that only did `return $respond($status, $data)` needs no changes. The steps below cover the

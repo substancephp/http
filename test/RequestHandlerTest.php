@@ -16,6 +16,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
+use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
 use SubstancePHP\HTTP\Internal\MutableRequestHandler;
 use SubstancePHP\HTTP\RequestHandler;
 use SubstancePHP\HTTP\Route;
@@ -191,6 +192,87 @@ class RequestHandlerTest extends TestCase
         // test unhappy - bad route
         $request = $requestFactory->createServerRequest('GET', '/ignore')
             ->withAttribute(Route::class, null);
+        $requestHandler->handle($request);
+    }
+
+    #[Test]
+    public function handleWithDefaultSkippedMiddleware(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $responseFactory = new ResponseFactory();
+
+        // B is registered but disabled by default; /dummy does not engage it.
+        $requestHandler = RequestHandler::from(
+            [
+                new ExampleMiddlewareA(),
+                new ExampleMiddlewareB(),
+                new ExampleMiddlewareC(),
+                new AttributeGatheringMiddleware($responseFactory),
+            ],
+            [ExampleMiddlewareB::class],
+        );
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy');
+
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, $route);
+
+        $response = $requestHandler->handle($request);
+        $requestAttributes = $response->getHeader('X-Request-Attributes');
+        $this->assertCount(1, $requestAttributes);
+        // /dummy declares #[Skip(A, C)]; B is disabled by default, so only gathering runs.
+        $expected = '{' .
+            '"SubstancePHP\\\\HTTP\\\\Route":{"normalizedPath":"dummy"},' .
+            '"attribute gathering middleware called":true' .
+            '}';
+        $this->assertSame($expected, $requestAttributes[0]);
+    }
+
+    #[Test]
+    public function handleWithEngagedMiddleware(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $responseFactory = new ResponseFactory();
+
+        // B is disabled by default, but /dummy-engage opts it back in.
+        $requestHandler = RequestHandler::from(
+            [
+                new ExampleMiddlewareA(),
+                new ExampleMiddlewareB(),
+                new ExampleMiddlewareC(),
+                new AttributeGatheringMiddleware($responseFactory),
+            ],
+            [ExampleMiddlewareB::class],
+        );
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-engage');
+
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, $route);
+
+        $response = $requestHandler->handle($request);
+        $requestAttributes = $response->getHeader('X-Request-Attributes');
+        $this->assertCount(1, $requestAttributes);
+        $expected = '{' .
+            '"SubstancePHP\\\\HTTP\\\\Route":{"normalizedPath":"dummy-engage"},' .
+            '"middleware A called":true,' .
+            '"middleware B called":true,' .
+            '"middleware C called":true,' .
+            '"attribute gathering middleware called":true' .
+            '}';
+        $this->assertSame($expected, $requestAttributes[0]);
+    }
+
+    #[Test]
+    public function handleWithUnregisteredMiddlewareDeclaration(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $responseFactory = new ResponseFactory();
+        $requestHandler = RequestHandler::from([new AttributeGatheringMiddleware($responseFactory)]);
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-unknown');
+
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, $route);
+
+        $this->expectException(InvalidMiddlewareException::class);
         $requestHandler->handle($request);
     }
 }

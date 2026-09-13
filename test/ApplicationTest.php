@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SubstancePHP\HTTP\Application;
+use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
+use SubstancePHP\HTTP\MiddlewareSpec;
 use SubstancePHP\HTTP\SubstanceProvider;
 use TestUtil\Fixture\ApplicationProvider;
 use TestUtil\Fixture\Middleware\AttributeGatheringMiddleware;
@@ -74,5 +76,40 @@ class ApplicationTest extends TestCase
             middlewares: [ExampleMiddlewareA::class, ExampleMiddlewareB::class, ExampleMiddlewareC::class],
             htmlEncoding: 'utf-8',
         );
+    }
+
+    #[Test]
+    public function duplicateMiddlewareThrows(): void
+    {
+        $actionRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'action']);
+        $templateRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'template']);
+        $this->expectException(InvalidMiddlewareException::class);
+        Application::make(
+            env: [],
+            actionRoot: $actionRoot,
+            templateRoot: $templateRoot,
+            providers: [SubstanceProvider::class, ApplicationProvider::class],
+            middlewares: [ExampleMiddlewareA::class, ExampleMiddlewareA::class],
+            htmlEncoding: 'utf-8',
+        );
+    }
+
+    #[Test]
+    public function disabledByDefaultMiddlewareIsAccepted(): void
+    {
+        $actionRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'action']);
+        $templateRoot = \implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'testutil', 'fixture', 'template']);
+        $instance = Application::make(
+            env: [],
+            actionRoot: $actionRoot,
+            templateRoot: $templateRoot,
+            providers: [SubstanceProvider::class, ApplicationProvider::class],
+            middlewares: [
+                MiddlewareSpec::disable(ExampleMiddlewareA::class),
+                ExampleMiddlewareB::class,
+            ],
+            htmlEncoding: 'utf-8',
+        );
+        $this->assertInstanceOf(Application::class, $instance);
     }
 }
