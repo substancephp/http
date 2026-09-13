@@ -11,6 +11,9 @@ use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\ConfigurableMiddlewareInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
 use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
+use SubstancePHP\HTTP\Middleware\Configure;
+use SubstancePHP\HTTP\Middleware\Engage;
+use SubstancePHP\HTTP\Middleware\Skip;
 use SubstancePHP\HTTP\Route;
 
 /** @internal */
@@ -31,7 +34,7 @@ class MutableRequestHandler implements RequestHandlerInterface
      */
     public function __construct(
         private array $middlewareStack,
-        array $skippedByDefault = [],
+        array $skippedByDefault,
     ) {
         $this->skippedByDefault = \array_fill_keys($skippedByDefault, true);
         $this->registeredMiddleware = \array_fill_keys(\array_map(\get_class(...), $middlewareStack), true);
@@ -62,7 +65,11 @@ class MutableRequestHandler implements RequestHandlerInterface
         // the middleware's defaults via parseConfig([]).
         if ($middleware instanceof ConfigurableMiddlewareInterface) {
             $class = \get_class($middleware);
-            $config = ($route === null) ? [] : ($route->configFor($class) ?? []);
+            if ($route === null) {
+                $config = [];
+            } else {
+                $config = $route->configFor($class) ?? [];
+            }
             $request = $request->withAttribute($class, $middleware->parseConfig($config));
         }
         return $middleware->process($request, $this);

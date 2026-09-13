@@ -304,23 +304,28 @@ class Route
         $configure = [];
         $reflectionFunction = new \ReflectionFunction($this->callback);
         foreach ($reflectionFunction->getAttributes() as $reflectionAttribute) {
-            if ($reflectionAttribute->getName() === Skip::class) {
-                $attribute = $reflectionAttribute->newInstance();
-                \assert($attribute instanceof Skip);
-                self::declare($skip, $attribute->middleware, 'Skip');
-            } elseif ($reflectionAttribute->getName() === Engage::class) {
-                $attribute = $reflectionAttribute->newInstance();
-                \assert($attribute instanceof Engage);
-                self::declare($engage, $attribute->middleware, 'Engage');
-            } elseif ($reflectionAttribute->getName() === Configure::class) {
-                $attribute = $reflectionAttribute->newInstance();
-                \assert($attribute instanceof Configure);
-                if (isset($configure[$attribute->middleware])) {
-                    throw new InvalidMiddlewareException(
-                        "Duplicate Configure declaration for: {$attribute->middleware}",
-                    );
-                }
-                $configure[$attribute->middleware] = $attribute->config;
+            $name = $reflectionAttribute->getName();
+            switch ($name) {
+                case Skip::class:
+                    $attribute = $reflectionAttribute->newInstance();
+                    \assert($attribute instanceof Skip);
+                    self::declare($skip, $attribute->middleware, 'Skip');
+                    break;
+                case Engage::class:
+                    $attribute = $reflectionAttribute->newInstance();
+                    \assert($attribute instanceof Engage);
+                    self::declare($engage, $attribute->middleware, 'Engage');
+                    break;
+                case Configure::class:
+                    $attribute = $reflectionAttribute->newInstance();
+                    \assert($attribute instanceof Configure);
+                    if (isset($configure[$attribute->middleware])) {
+                        throw new InvalidMiddlewareException(
+                            "Duplicate Configure declaration for: {$attribute->middleware}",
+                        );
+                    }
+                    $configure[$attribute->middleware] = $attribute->config;
+                    break;
             }
         }
         // #[Configure] also engages the middleware, so a Skip/Configure (or Skip/Engage) clash is an error.
@@ -331,7 +336,7 @@ class Route
                     . \implode(', ', \array_keys($conflicts)),
             );
         }
-        return ['skip' => $skip, 'engage' => $engage, 'configure' => $configure];
+        return \compact('skip', 'engage', 'configure');
     }
 
     /**

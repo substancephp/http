@@ -10,6 +10,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
 use SubstancePHP\HTTP\Internal\MutableRequestHandler;
+use SubstancePHP\HTTP\Middleware\Engage;
 
 /** Processes HTTP requests by passing them through a series of middlewares. */
 readonly class RequestHandler implements RequestHandlerInterface
@@ -18,7 +19,7 @@ readonly class RequestHandler implements RequestHandlerInterface
      * @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER.
      * @param list<class-string<MiddlewareInterface>> $skippedByDefault fully-qualified names of
      *   middlewares that are skipped unless a route opts them back in with
-     *   {@see \SubstancePHP\HTTP\Middleware\Engage}.
+     *   {@see Engage}.
      */
     public static function from(array $middlewares, array $skippedByDefault = []): self
     {

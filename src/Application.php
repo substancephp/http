@@ -12,6 +12,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
+use SubstancePHP\HTTP\Middleware\Engage;
 
 class Application implements ContainerInterface
 {
@@ -26,7 +27,7 @@ class Application implements ContainerInterface
      * @param class-string<ProviderInterface>[] $providers
      * @param array<class-string<MiddlewareInterface>|MiddlewareSpec> $middlewares listed OUTER to INNER;
      *   a bare class name is enabled by default, or wrap it in {@see MiddlewareSpec::disable()} to skip
-     *   it unless a route opts it back in with {@see \SubstancePHP\HTTP\Middleware\Engage}.
+     *   it unless a route opts it back in with {@see Engage}.
      * @throws InvalidMiddlewareException if the same middleware is registered more than once.
      */
     public static function make(
@@ -47,12 +48,14 @@ class Application implements ContainerInterface
         $container = Container::from($factories);
 
         $classes = [];
+        $registered = [];
         $skippedByDefault = [];
         foreach ($middlewares as $middleware) {
             $spec = ($middleware instanceof MiddlewareSpec) ? $middleware : MiddlewareSpec::enable($middleware);
-            if (\in_array($spec->class, $classes, true)) {
+            if (isset($registered[$spec->class])) {
                 throw new InvalidMiddlewareException("Middleware registered more than once: {$spec->class}");
             }
+            $registered[$spec->class] = true;
             $classes[] = $spec->class;
             if (! $spec->enabledByDefault) {
                 $skippedByDefault[] = $spec->class;
