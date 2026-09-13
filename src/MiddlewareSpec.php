@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SubstancePHP\HTTP;
 
 use Psr\Http\Server\MiddlewareInterface;
+use SubstancePHP\HTTP\Middleware\Engage;
 
 /**
  * Describes one middleware in an application's middleware stack. In particular it records whether the
@@ -12,7 +13,7 @@ use Psr\Http\Server\MiddlewareInterface;
  *
  * A bare class name passed to {@see Application::make()} is equivalent to {@see self::enable()}.
  * {@see self::disable()} marks a middleware as skipped unless a route opts it back in with
- * {@see \SubstancePHP\HTTP\Middleware\Engage}.
+ * {@see Engage}.
  */
 final readonly class MiddlewareSpec
 {
