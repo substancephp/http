@@ -31,13 +31,13 @@ TODO
 
 * [Templating](docs/templating.md)
 * [Responses and redirects](docs/responses.md)
+* [Middleware](docs/middleware.md)
 * [Static analysis: catching unescaped output](docs/static-analysis.md)
 
 The following feature docs are planned but not yet written:
 
 * Routing (TODO)
 * Actions (TODO)
-* Middleware (TODO)
 * Application setup (TODO)
 * Requests and parameters (TODO)
 * Error handling (TODO)

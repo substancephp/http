@@ -12,3 +12,6 @@ includes:
 parameters:
     excludePaths:
         - test/PHPStan/data
+        # A deliberately non-configurable middleware passed to #[Configure], to exercise the runtime
+        # guard in MutableRequestHandler (static analysis correctly rejects it).
+        - testutil/Fixture/action/dummy-configured-nonconfigurable.get.php

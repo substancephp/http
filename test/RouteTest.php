@@ -13,6 +13,7 @@ use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\ContextFactory;
 use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
 use SubstancePHP\HTTP\Route;
+use TestUtil\Fixture\Middleware\ConfigurableMiddleware;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
@@ -25,6 +26,9 @@ use TestUtil\TestUtil;
 #[CoversMethod(Route::class, 'shouldEngage')]
 #[CoversMethod(Route::class, 'skippedMiddlewares')]
 #[CoversMethod(Route::class, 'engagedMiddlewares')]
+#[CoversMethod(Route::class, 'hasConfigFor')]
+#[CoversMethod(Route::class, 'configFor')]
+#[CoversMethod(Route::class, 'configuredMiddlewares')]
 #[CoversMethod(Route::class, 'execute')]
 class RouteTest extends TestCase
 {
@@ -108,6 +112,40 @@ class RouteTest extends TestCase
 
         $this->expectException(InvalidMiddlewareException::class);
         $route->shouldSkip(ExampleMiddlewareA::class);
+    }
+
+    #[Test]
+    public function configFor(): void
+    {
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-configured');
+        \assert($route instanceof Route);
+
+        $this->assertTrue($route->hasConfigFor(ConfigurableMiddleware::class));
+        $this->assertSame(['rate' => 30], $route->configFor(ConfigurableMiddleware::class));
+        $this->assertSame([ConfigurableMiddleware::class], $route->configuredMiddlewares());
+
+        $this->assertFalse($route->hasConfigFor(ExampleMiddlewareA::class));
+        $this->assertNull($route->configFor(ExampleMiddlewareA::class));
+    }
+
+    #[Test]
+    public function duplicateConfigurationsThrow(): void
+    {
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-configured-duplicate');
+        \assert($route instanceof Route);
+
+        $this->expectException(InvalidMiddlewareException::class);
+        $route->configFor(ConfigurableMiddleware::class);
+    }
+
+    #[Test]
+    public function configurationAndSkipConflictThrows(): void
+    {
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-configured-conflict');
+        \assert($route instanceof Route);
+
+        $this->expectException(InvalidMiddlewareException::class);
+        $route->configFor(ConfigurableMiddleware::class);
     }
 
     #[Test]

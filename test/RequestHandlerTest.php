@@ -21,6 +21,7 @@ use SubstancePHP\HTTP\Internal\MutableRequestHandler;
 use SubstancePHP\HTTP\RequestHandler;
 use SubstancePHP\HTTP\Route;
 use TestUtil\Fixture\Middleware\AttributeGatheringMiddleware;
+use TestUtil\Fixture\Middleware\ConfigurableMiddleware;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
@@ -268,6 +269,93 @@ class RequestHandlerTest extends TestCase
         $responseFactory = new ResponseFactory();
         $requestHandler = RequestHandler::from([new AttributeGatheringMiddleware($responseFactory)]);
         $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-unknown');
+
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, $route);
+
+        $this->expectException(InvalidMiddlewareException::class);
+        $requestHandler->handle($request);
+    }
+
+    #[Test]
+    public function handleWithConfiguredMiddleware(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $responseFactory = new ResponseFactory();
+
+        // ConfigurableMiddleware is disabled by default; #[Configure] both configures and engages it.
+        $requestHandler = RequestHandler::from(
+            [new ConfigurableMiddleware(), new AttributeGatheringMiddleware($responseFactory)],
+            [ConfigurableMiddleware::class],
+        );
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-configured');
+
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, $route);
+
+        $response = $requestHandler->handle($request);
+        $requestAttributes = $response->getHeader('X-Request-Attributes');
+        $this->assertCount(1, $requestAttributes);
+        $expected = '{' .
+            '"SubstancePHP\\\\HTTP\\\\Route":{"normalizedPath":"dummy-configured"},' .
+            '"TestUtil\\\\Fixture\\\\Middleware\\\\ConfigurableMiddleware":{"rate":30},' .
+            '"configurable middleware rate":30,' .
+            '"attribute gathering middleware called":true' .
+            '}';
+        $this->assertSame($expected, $requestAttributes[0]);
+    }
+
+    #[Test]
+    public function handleWithUnconfiguredMiddlewareUsesDefaults(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $responseFactory = new ResponseFactory();
+
+        // No #[Configure] on /0: the middleware still receives parseConfig([]) (its defaults).
+        $requestHandler = RequestHandler::from(
+            [new ConfigurableMiddleware(), new AttributeGatheringMiddleware($responseFactory)],
+        );
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/0');
+
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, $route);
+
+        $response = $requestHandler->handle($request);
+        $requestAttributes = $response->getHeader('X-Request-Attributes');
+        $expected = '{' .
+            '"SubstancePHP\\\\HTTP\\\\Route":{"normalizedPath":"0"},' .
+            '"TestUtil\\\\Fixture\\\\Middleware\\\\ConfigurableMiddleware":{"rate":10},' .
+            '"configurable middleware rate":10,' .
+            '"attribute gathering middleware called":true' .
+            '}';
+        $this->assertSame($expected, $requestAttributes[0]);
+    }
+
+    #[Test]
+    public function handleWithUnregisteredConfiguration(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $responseFactory = new ResponseFactory();
+        $requestHandler = RequestHandler::from([new AttributeGatheringMiddleware($responseFactory)]);
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-configured-unknown');
+
+        $request = $requestFactory->createServerRequest('GET', '/ignore')
+            ->withAttribute(Route::class, $route);
+
+        $this->expectException(InvalidMiddlewareException::class);
+        $requestHandler->handle($request);
+    }
+
+    #[Test]
+    public function handleWithNonConfigurableConfiguration(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $responseFactory = new ResponseFactory();
+        // ExampleMiddlewareA is registered, but does not implement ConfigurableMiddlewareInterface.
+        $requestHandler = RequestHandler::from(
+            [new ExampleMiddlewareA(), new AttributeGatheringMiddleware($responseFactory)],
+        );
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/dummy-configured-nonconfigurable');
 
         $request = $requestFactory->createServerRequest('GET', '/ignore')
             ->withAttribute(Route::class, $route);
