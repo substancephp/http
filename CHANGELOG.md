@@ -15,6 +15,8 @@ Major (breaking):
   body (`1xx`, `204`, `304`) or when the action removes the `Content-Type` header.
 * The `EmptyRenderer` is retired; a content type with no renderer now throws
   `UnsupportedContentTypeException`.
+* `#[Skip]` now takes a single middleware (repeat the attribute to skip several), and its public
+  property is `middleware` (a `string`) rather than `skippableMiddlewares` (a `string[]`).
 
 Minor:
 * Middleware can be registered but disabled by default: pass a `MiddlewareSpec::disable()` in place of
@@ -22,8 +24,8 @@ Minor:
   `[A::class, MiddlewareSpec::disable(B::class), C::class]`). A route opts it back in with the new
   `#[Engage]` attribute, the inverse of `#[Skip]`.
 * Inconsistent middleware declarations now throw `InvalidMiddlewareException`: the same middleware
-  declared both skipped and engaged, or twice in one attribute; a route referencing a middleware that
-  is not registered; or the same middleware registered twice in the stack.
+  declared twice, or both skipped and engaged; a route referencing a middleware that is not
+  registered; or the same middleware registered twice in the stack.
 
 #### Upgrading to 0.8.0
 
@@ -72,6 +74,16 @@ and `text/html*` produced an empty body (via the removed `EmptyRenderer`). `Rend
 empty body, use a supported content type, or express "no body" explicitly by removing the `Content-Type`
 header (`$respond->removeHeader('Content-Type')`) or by returning a bodyless status (`1xx`, `204`,
 `304`).
+
+**5. `#[Skip]` arity.** `#[Skip]` now takes a single middleware; repeat it to skip several:
+
+```php
+// before
+#[Skip(A::class, B::class)]
+
+// after
+#[Skip(A::class)] #[Skip(B::class)]
+```
 
 The `substance.http.default-content-type` container key is unchanged; it now seeds the default
 `Content-Type` header.

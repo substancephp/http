@@ -7,7 +7,7 @@ use SubstancePHP\HTTP\Middleware\Skip;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
 
-return #[Skip(ExampleMiddlewareA::class, ExampleMiddlewareC::class)] static function (
+return #[Skip(ExampleMiddlewareA::class)] #[Skip(ExampleMiddlewareC::class)] static function (
     #[Inject('greetWith')] string $word,
 ): mixed {
     return ['data' => ['greeting' => $word]];

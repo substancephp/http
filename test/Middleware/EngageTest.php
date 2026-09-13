@@ -17,21 +17,20 @@ class EngageTest extends TestCase
     #[Test]
     public function construct(): void
     {
-        $engage = new Engage('alpha', 'beta', 'gamma');
-        $this->assertSame(['alpha', 'beta', 'gamma'], $engage->engagedMiddlewares);
+        $engage = new Engage('alpha');
+        $this->assertSame('alpha', $engage->middleware);
     }
 
     #[Test]
     public function useAsAttribute(): void
     {
-        $closure = #[Engage('hi', 'there')] function () {
+        // The attribute is repeatable: one middleware per occurrence.
+        $closure = #[Engage('alpha')] #[Engage('beta')] function () {
         };
         $function = new \ReflectionFunction($closure);
         $attributes = $function->getAttributes(Engage::class);
-        $this->assertCount(1, $attributes);
-        $attribute = $attributes[0];
-        $instance = $attribute->newInstance();
-        $this->assertInstanceOf(Engage::class, $instance);
-        $this->assertSame(['hi', 'there'], $instance->engagedMiddlewares);
+        $this->assertCount(2, $attributes);
+        $this->assertSame('alpha', $attributes[0]->newInstance()->middleware);
+        $this->assertSame('beta', $attributes[1]->newInstance()->middleware);
     }
 }

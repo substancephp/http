@@ -4,19 +4,16 @@ namespace SubstancePHP\HTTP\Middleware;
 
 use SubstancePHP\HTTP\RequestHandler;
 
-#[\Attribute(\Attribute::TARGET_FUNCTION)]
+#[\Attribute(\Attribute::TARGET_FUNCTION | \Attribute::IS_REPEATABLE)]
 readonly class Engage
 {
-    /** @var string[] */
-    public array $engagedMiddlewares;
-
     /**
-     * @param string ...$middlewares the fully qualified class names of the PSR-15 middleware classes that
+     * @param string $middleware the fully qualified class name of the PSR-15 middleware class that
      *   should run when handling a request-handling action callback via {@see RequestHandler}, even if
-     *   they are disabled by default (see {@see \SubstancePHP\HTTP\MiddlewareSpec::disable()}).
+     *   it is disabled by default (see {@see \SubstancePHP\HTTP\MiddlewareSpec::disable()}). Apply the
+     *   attribute once per middleware; repeat it to engage several.
      */
-    public function __construct(string ...$middlewares)
+    public function __construct(public string $middleware)
     {
-        $this->engagedMiddlewares = $middlewares;
     }
 }
