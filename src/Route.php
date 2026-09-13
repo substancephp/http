@@ -261,11 +261,11 @@ class Route
             if ($reflectionAttribute->getName() === Skip::class) {
                 $attribute = $reflectionAttribute->newInstance();
                 \assert($attribute instanceof Skip);
-                self::declare($skip, $attribute->skippableMiddlewares, 'Skip');
+                self::declare($skip, $attribute->middleware, 'Skip');
             } elseif ($reflectionAttribute->getName() === Engage::class) {
                 $attribute = $reflectionAttribute->newInstance();
                 \assert($attribute instanceof Engage);
-                self::declare($engage, $attribute->engagedMiddlewares, 'Engage');
+                self::declare($engage, $attribute->middleware, 'Engage');
             }
         }
         $conflicts = \array_intersect_key($skip, $engage);
@@ -279,17 +279,14 @@ class Route
 
     /**
      * @param array<string, true> &$declarations
-     * @param array<string> $middlewares
-     * @throws InvalidMiddlewareException if a middleware is declared more than once
+     * @throws InvalidMiddlewareException if the middleware is declared more than once
      */
-    private static function declare(array &$declarations, array $middlewares, string $attribute): void
+    private static function declare(array &$declarations, string $middleware, string $attribute): void
     {
-        foreach ($middlewares as $middleware) {
-            if (isset($declarations[$middleware])) {
-                throw new InvalidMiddlewareException("Duplicate {$attribute} declaration for: {$middleware}");
-            }
-            $declarations[$middleware] = true;
+        if (isset($declarations[$middleware])) {
+            throw new InvalidMiddlewareException("Duplicate {$attribute} declaration for: {$middleware}");
         }
+        $declarations[$middleware] = true;
     }
 
     /** @return array<string, string> the captured path parameters, keyed by their `[name]` declaration */
