@@ -14,15 +14,25 @@ use SubstancePHP\HTTP\Internal\MutableRequestHandler;
 /** Processes HTTP requests by passing them through a series of middlewares. */
 readonly class RequestHandler implements RequestHandlerInterface
 {
-    /** @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER. */
-    public static function from(array $middlewares): self
+    /**
+     * @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER.
+     * @param list<class-string<MiddlewareInterface>> $skippedByDefault fully-qualified names of
+     *   middlewares that are skipped unless a route opts them back in with
+     *   {@see \SubstancePHP\HTTP\Middleware\Engage}.
+     */
+    public static function from(array $middlewares, array $skippedByDefault = []): self
     {
-        return new self($middlewares);
+        return new self($middlewares, $skippedByDefault);
     }
 
-    /** @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER. */
-    private function __construct(private array $middlewares)
-    {
+    /**
+     * @param array<MiddlewareInterface> $middlewares listed in order of OUTER to INNER.
+     * @param list<class-string<MiddlewareInterface>> $skippedByDefault
+     */
+    private function __construct(
+        private array $middlewares,
+        private array $skippedByDefault = [],
+    ) {
     }
 
     /**
@@ -33,7 +43,7 @@ readonly class RequestHandler implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $middlewareStack = \array_reverse($this->middlewares);
-        $handler = new MutableRequestHandler($middlewareStack);
+        $handler = new MutableRequestHandler($middlewareStack, $this->skippedByDefault);
         return $handler->handle($request);
     }
 }
