@@ -4,6 +4,7 @@ namespace SubstancePHP\HTTP;
 
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
+use SubstancePHP\HTTP\Middleware\Configure;
 use SubstancePHP\HTTP\Middleware\Engage;
 use SubstancePHP\HTTP\Middleware\Skip;
 use SubstancePHP\HTTP\RequestParams\PathParams;
@@ -54,7 +55,13 @@ class Route
     /** @var array<string, string> captured path parameters, keyed by the segment name declared in `[name]` */
     private readonly array $params;
 
-    /** @var array{skip: array<string, true>, engage: array<string, true>}|null */
+    /**
+     * @var array{
+     *     skip: array<string, true>,
+     *     engage: array<string, true>,
+     *     configure: array<string, array<string, mixed>>,
+     * }|null
+     */
     private ?array $middlewareDeclarations;
 
     /** @param array<string, string> $params the captured path parameters */
@@ -240,22 +247,61 @@ class Route
         return \array_keys($this->middlewareDeclarations()['engage']);
     }
 
-    /** @return array{skip: array<string, true>, engage: array<string, true>} */
+    /**
+     * Whether the route configures the named middleware via {@see Configure}.
+     *
+     * @throws \ReflectionException
+     */
+    public function hasConfigFor(string $middleware): bool
+    {
+        return isset($this->middlewareDeclarations()['configure'][$middleware]);
+    }
+
+    /**
+     * @return array<string, mixed>|null the config declared for the named middleware, or null if none
+     * @throws \ReflectionException
+     */
+    public function configFor(string $middleware): ?array
+    {
+        return $this->middlewareDeclarations()['configure'][$middleware] ?? null;
+    }
+
+    /**
+     * @return list<string> fully-qualified names of middlewares the route configures via {@see Configure}
+     * @throws \ReflectionException
+     */
+    public function configuredMiddlewares(): array
+    {
+        return \array_keys($this->middlewareDeclarations()['configure']);
+    }
+
+    /**
+     * @return array{
+     *     skip: array<string, true>,
+     *     engage: array<string, true>,
+     *     configure: array<string, array<string, mixed>>,
+     * }
+     */
     private function middlewareDeclarations(): array
     {
         return $this->middlewareDeclarations ??= $this->computeMiddlewareDeclarations();
     }
 
     /**
-     * @return array{skip: array<string, true>, engage: array<string, true>}
+     * @return array{
+     *     skip: array<string, true>,
+     *     engage: array<string, true>,
+     *     configure: array<string, array<string, mixed>>,
+     * }
      * @throws \ReflectionException
-     * @throws InvalidMiddlewareException if the same middleware is declared both skipped and engaged, or
-     *   declared more than once in a single attribute.
+     * @throws InvalidMiddlewareException if the same middleware is declared more than once, or declared
+     *   both skipped and engaged/configured.
      */
     private function computeMiddlewareDeclarations(): array
     {
         $skip = [];
         $engage = [];
+        $configure = [];
         $reflectionFunction = new \ReflectionFunction($this->callback);
         foreach ($reflectionFunction->getAttributes() as $reflectionAttribute) {
             if ($reflectionAttribute->getName() === Skip::class) {
@@ -266,15 +312,26 @@ class Route
                 $attribute = $reflectionAttribute->newInstance();
                 \assert($attribute instanceof Engage);
                 self::declare($engage, $attribute->middleware, 'Engage');
+            } elseif ($reflectionAttribute->getName() === Configure::class) {
+                $attribute = $reflectionAttribute->newInstance();
+                \assert($attribute instanceof Configure);
+                if (isset($configure[$attribute->middleware])) {
+                    throw new InvalidMiddlewareException(
+                        "Duplicate Configure declaration for: {$attribute->middleware}",
+                    );
+                }
+                $configure[$attribute->middleware] = $attribute->config;
             }
         }
-        $conflicts = \array_intersect_key($skip, $engage);
+        // #[Configure] also engages the middleware, so a Skip/Configure (or Skip/Engage) clash is an error.
+        $conflicts = \array_intersect_key($skip, $engage + $configure);
         if ($conflicts !== []) {
             throw new InvalidMiddlewareException(
-                'Middleware declared both #[Skip] and #[Engage]: ' . \implode(', ', \array_keys($conflicts)),
+                'Middleware declared both skipped and engaged/configured: '
+                    . \implode(', ', \array_keys($conflicts)),
             );
         }
-        return ['skip' => $skip, 'engage' => $engage];
+        return ['skip' => $skip, 'engage' => $engage, 'configure' => $configure];
     }
 
     /**

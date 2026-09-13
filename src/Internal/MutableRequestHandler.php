@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use SubstancePHP\HTTP\ConfigurableMiddlewareInterface;
 use SubstancePHP\HTTP\Exception\BaseException\EmptyMiddlewareStackException;
 use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
 use SubstancePHP\HTTP\Route;
@@ -57,19 +58,27 @@ class MutableRequestHandler implements RequestHandlerInterface
             $middleware = \array_pop($this->middlewareStack);
         } while (($route !== null) && $this->shouldSkip($route, \get_class($middleware)));
 
+        // A configurable middleware always receives a parsed config; a route that declares none yields
+        // the middleware's defaults via parseConfig([]).
+        if ($middleware instanceof ConfigurableMiddlewareInterface) {
+            $class = \get_class($middleware);
+            $config = ($route === null) ? [] : ($route->configFor($class) ?? []);
+            $request = $request->withAttribute($class, $middleware->parseConfig($config));
+        }
         return $middleware->process($request, $this);
     }
 
     /**
-     * Whether the named middleware should be skipped for the route. A route-level {@see Engage} opts a
-     * middleware back in (and wins over a route-level {@see Skip}, though declaring both is an error);
-     * otherwise a route-level {@see Skip}, or the application-wide "disabled by default", skips it.
+     * Whether the named middleware should be skipped for the route. A route-level {@see Engage} or
+     * {@see Configure} opts a middleware back in (and wins over a route-level {@see Skip}, though
+     * declaring both is an error); otherwise a route-level {@see Skip}, or the application-wide
+     * "disabled by default", skips it.
      *
      * @throws \ReflectionException
      */
     private function shouldSkip(Route $route, string $middleware): bool
     {
-        if ($route->shouldEngage($middleware)) {
+        if ($route->shouldEngage($middleware) || $route->hasConfigFor($middleware)) {
             return false;
         }
         if ($route->shouldSkip($middleware)) {
@@ -79,15 +88,28 @@ class MutableRequestHandler implements RequestHandlerInterface
     }
 
     /**
-     * @throws InvalidMiddlewareException if the route references a middleware that is not registered.
+     * @throws InvalidMiddlewareException if the route references a middleware that is not registered, or
+     *   configures a middleware that is not {@see ConfigurableMiddlewareInterface}.
      * @throws \ReflectionException
      */
     private function validateRoute(Route $route): void
     {
-        foreach ([...$route->skippedMiddlewares(), ...$route->engagedMiddlewares()] as $middleware) {
+        $referenced = [
+            ...$route->skippedMiddlewares(),
+            ...$route->engagedMiddlewares(),
+            ...$route->configuredMiddlewares(),
+        ];
+        foreach ($referenced as $middleware) {
             if (! isset($this->registeredMiddleware[$middleware])) {
                 throw new InvalidMiddlewareException(
                     "Route references a middleware that is not registered: {$middleware}",
+                );
+            }
+        }
+        foreach ($route->configuredMiddlewares() as $middleware) {
+            if (! \is_a($middleware, ConfigurableMiddlewareInterface::class, true)) {
+                throw new InvalidMiddlewareException(
+                    "Route configures a middleware that is not configurable: {$middleware}",
                 );
             }
         }
