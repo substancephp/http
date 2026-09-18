@@ -18,12 +18,16 @@ class HtmlRenderer implements RendererInterface
      */
     private const VALID_VARIABLE_NAME_PATTERN = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $shared
+     */
     public function __construct(
         private string $templatePath,
         private array $data,
         private Escaper $escaper,
         private string $templateRoot,
+        private array $shared = [],
         private string $defaultLayout = 'layout',
     ) {
     }
@@ -351,6 +355,10 @@ class HtmlRenderer implements RendererInterface
      */
     private function includeWith(string $path, array $data): void
     {
+        // Shared variables (the application's Templating::$shared) are the base layer, so they reach
+        // every template layer (view, layout, partial and element) while the include's own data wins on
+        // a name clash.
+        $data += $this->shared;
         self::assertValidDataKeys($data);
         // These properties are read only inside the closure below, synchronously and before any
         // template code runs, so a nested include may safely overwrite them; the closure scope

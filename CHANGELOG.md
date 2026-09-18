@@ -1,5 +1,26 @@
 # CHANGELOG
 
+### Unreleased
+
+Major (breaking):
+* `Application::make()` now takes a single `Templating` (the template root, the source encoding, the default
+  layout, and the shared template variables) instead of the `templateRoot`/`htmlEncoding` arguments. The
+  `substance.template-root`, `substance.html-encoding` and `substance.default-layout` container keys are
+  gone; that configuration now lives on `Templating`.
+* `RendererFactoryInterface::createRenderer()` now takes a single `RenderInput` (the renderer path, the
+  response content type, the action's data, and the shared variables) instead of three positional arguments.
+* Shared template data is contributed by `ShareInterface` services listed in `Templating::$shared`, instead of
+  an array of values/closures; `RouteActorMiddleware` and `ExceptionHandlerMiddleware` take a `Shares`.
+* `HtmlRenderer` takes a `shared` array; `ExceptionHandlerMiddleware` now requires the application container
+  and a `ContextFactoryInterface`.
+
+Minor:
+* Applications can expose shared, cross-cutting data (CSRF fields, navigation state, the current user, flash
+  messages) to every template as plain variables. Implement a `ShareInterface`, register it as a container
+  service, and list its class in `Templating::$shared`. Shared variables are resolved only when an HTML
+  template is rendered, so responses of other content types (e.g. JSON) pay nothing for them. See
+  `docs/templating.md`.
+
 ### v0.9.0
 
 Major (breaking):

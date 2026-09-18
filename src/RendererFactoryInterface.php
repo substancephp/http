@@ -6,9 +6,5 @@ namespace SubstancePHP\HTTP;
 
 interface RendererFactoryInterface
 {
-    public function createRenderer(
-        string $normalizedRequestPath,
-        string $responseContentType,
-        mixed $responseData,
-    ): RendererInterface;
+    public function createRenderer(RenderInput $input): RendererInterface;
 }

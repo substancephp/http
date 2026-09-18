@@ -12,11 +12,13 @@ use SubstancePHP\HTTP\Application;
 use SubstancePHP\HTTP\Exception\BaseException\InvalidMiddlewareException;
 use SubstancePHP\HTTP\MiddlewareSpec;
 use SubstancePHP\HTTP\SubstanceProvider;
+use SubstancePHP\HTTP\Templating;
 use TestUtil\Fixture\ApplicationProvider;
 use TestUtil\Fixture\Middleware\AttributeGatheringMiddleware;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareA;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareB;
 use TestUtil\Fixture\Middleware\ExampleMiddlewareC;
+use TestUtil\TestUtil;
 
 #[CoversClass(Application::class)]
 #[CoversMethod(Application::class, '__construct')]
@@ -34,7 +36,6 @@ class ApplicationTest extends TestCase
         $instance = Application::make(
             env: $env,
             actionRoot: $actionRoot,
-            templateRoot: $templateRoot,
             providers: [
                 SubstanceProvider::class,
                 ApplicationProvider::class,
@@ -45,7 +46,7 @@ class ApplicationTest extends TestCase
                 ExampleMiddlewareC::class,
                 AttributeGatheringMiddleware::class,
             ],
-            htmlEncoding: 'utf-8',
+            templating: new Templating($templateRoot),
         );
         $this->assertTrue($instance->has(ExampleMiddlewareA::class));
         $this->assertTrue($instance->has('foob.ar'));
@@ -71,10 +72,9 @@ class ApplicationTest extends TestCase
         Application::make(
             env: $env,
             actionRoot: $actionRoot,
-            templateRoot: $templateRoot,
             providers: [ApplicationProvider::class],
             middlewares: [ExampleMiddlewareA::class, ExampleMiddlewareB::class, ExampleMiddlewareC::class],
-            htmlEncoding: 'utf-8',
+            templating: new Templating($templateRoot),
         );
     }
 
@@ -87,10 +87,9 @@ class ApplicationTest extends TestCase
         Application::make(
             env: [],
             actionRoot: $actionRoot,
-            templateRoot: $templateRoot,
             providers: [SubstanceProvider::class, ApplicationProvider::class],
             middlewares: [ExampleMiddlewareA::class, ExampleMiddlewareA::class],
-            htmlEncoding: 'utf-8',
+            templating: new Templating($templateRoot),
         );
     }
 
@@ -102,14 +101,27 @@ class ApplicationTest extends TestCase
         $instance = Application::make(
             env: [],
             actionRoot: $actionRoot,
-            templateRoot: $templateRoot,
             providers: [SubstanceProvider::class, ApplicationProvider::class],
             middlewares: [
                 MiddlewareSpec::disable(ExampleMiddlewareA::class),
                 ExampleMiddlewareB::class,
             ],
-            htmlEncoding: 'utf-8',
+            templating: new Templating($templateRoot),
         );
         $this->assertInstanceOf(Application::class, $instance);
+    }
+
+    #[Test]
+    public function registersTheTemplatingConfiguration(): void
+    {
+        $templating = new Templating(root: TestUtil::getFixtureRoot() . '/template');
+        $instance = Application::make(
+            env: [],
+            actionRoot: TestUtil::getActionFixtureRoot(),
+            providers: [SubstanceProvider::class],
+            middlewares: [],
+            templating: $templating,
+        );
+        $this->assertSame($templating, $instance->get(Templating::class));
     }
 }

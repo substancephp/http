@@ -7,18 +7,18 @@ opt a default-disabled one back in, and configure a configurable one.
 
 ```php
 use SubstancePHP\HTTP\Application;
+use SubstancePHP\HTTP\Templating;
 
 Application::make(
     env: $_ENV,
     actionRoot: __DIR__ . '/actions',
-    templateRoot: __DIR__ . '/templates',
     providers: [AppProvider::class, SubstanceProvider::class],
     middlewares: [
         SecurityMiddleware::class,
         RateLimiterMiddleware::class,
         RouteMatcherMiddleware::class,
     ],
-    htmlEncoding: 'utf-8',
+    templating: new Templating(__DIR__ . '/templates'),
 );
 ```
 

@@ -10,14 +10,20 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
+use SubstancePHP\Container\Container;
+use SubstancePHP\HTTP\ContextFactory;
 use SubstancePHP\HTTP\ErrorResponseFallbackGenerator;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
 use SubstancePHP\HTTP\Middleware\ExceptionHandlerMiddleware;
 use SubstancePHP\HTTP\RendererFactory;
+use SubstancePHP\HTTP\Shares;
+use SubstancePHP\HTTP\Templating;
+use TestUtil\Fixture\GreetingShare;
 use TestUtil\TestUtil;
 
 #[CoversClass(ExceptionHandlerMiddleware::class)]
@@ -32,8 +38,11 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         $instance = new ExceptionHandlerMiddleware(
             responseFactory: $responseFactory,
             errorResponseFallbackGenerator: new ErrorResponseFallbackGenerator($responseFactory, null),
-            rendererFactory: new RendererFactory('', 'utf-8'),
+            rendererFactory: new RendererFactory(new Templating('', 'utf-8')),
             templateRoot: '',
+            container: Container::from([]),
+            contextFactory: new ContextFactory(),
+            shares: new Shares([]),
         );
         $this->assertInstanceOf(ExceptionHandlerMiddleware::class, $instance);
     }
@@ -366,16 +375,51 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         $this->assertSame('hello', (string) $response->getBody());
     }
 
+    #[Test]
+    public function processRendersErrorTemplateWithSharedVariables(): void
+    {
+        $requestHandler = new class () implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                UserError::throw(503, 'down');
+            }
+        };
+
+        $container = Container::from([
+            GreetingShare::class => fn () => new GreetingShare(),
+        ]);
+        $responseFactory = new ResponseFactory();
+        $instance = $this->makeInstance(
+            $responseFactory,
+            null,
+            TestUtil::getFixtureRoot() . '/template',
+            $container,
+            new Shares([GreetingShare::class]),
+        );
+
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/')
+            ->withHeader('Accept', 'text/html');
+        $response = $instance->process($request, $requestHandler);
+
+        $this->assertSame(503, $response->getStatusCode());
+        $this->assertStringContainsString('<p>My App</p>', (string) $response->getBody());
+    }
+
     private function makeInstance(
         ResponseFactory $responseFactory,
         ?LoggerInterface $logger,
         string $templateRoot = '',
+        ?ContainerInterface $container = null,
+        ?Shares $shares = null,
     ): ExceptionHandlerMiddleware {
         return new ExceptionHandlerMiddleware(
             responseFactory: $responseFactory,
             errorResponseFallbackGenerator: new ErrorResponseFallbackGenerator($responseFactory, $logger),
-            rendererFactory: new RendererFactory($templateRoot, 'utf-8'),
+            rendererFactory: new RendererFactory(new Templating($templateRoot, 'utf-8')),
             templateRoot: $templateRoot,
+            container: $container ?? Container::from([]),
+            contextFactory: new ContextFactory(),
+            shares: $shares ?? new Shares([]),
             logger: $logger,
         );
     }

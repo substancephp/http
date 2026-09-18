@@ -30,7 +30,6 @@ abstract class SubstanceProvider implements ProviderInterface
             // configuration
             'substance.http.default-content-type' => fn () => 'text/html; charset=utf-8',
             'substance.error-template' => fn () => 'error',
-            'substance.default-layout' => fn () => 'layout',
 
             // http response generation
             EmitterInterface::class => fn () => new Emitter(),
@@ -39,11 +38,8 @@ abstract class SubstanceProvider implements ProviderInterface
                 $c->has(LoggerInterface::class) ? $c->get(LoggerInterface::class) : null,
             ),
             ResponseFactoryInterface::class => fn () => new ResponseFactory(),
-            RendererFactoryInterface::class => fn ($c) => new RendererFactory(
-                templateRoot: $c->get('substance.template-root'),
-                htmlEncoding: $c->get('substance.html-encoding'),
-                defaultLayout: $c->get('substance.default-layout'),
-            ),
+            RendererFactoryInterface::class => fn ($c) => new RendererFactory($c->get(Templating::class)),
+            Shares::class => fn ($c) => new Shares($c->get(Templating::class)->shared),
 
             // middleware
             BodyParserMiddleware::class => fn () => new BodyParserMiddleware(),
@@ -51,7 +47,10 @@ abstract class SubstanceProvider implements ProviderInterface
                 responseFactory: $c->get(ResponseFactoryInterface::class),
                 errorResponseFallbackGenerator: $c->get(ErrorResponseFallbackGeneratorInterface::class),
                 rendererFactory: $c->get(RendererFactoryInterface::class),
-                templateRoot: $c->get('substance.template-root'),
+                templateRoot: $c->get(Templating::class)->root,
+                container: $c,
+                contextFactory: $c->get(ContextFactoryInterface::class),
+                shares: $c->get(Shares::class),
                 errorTemplatePath: $c->get('substance.error-template'),
                 logger: $c->has(LoggerInterface::class) ? $c->get(LoggerInterface::class) : null,
             ),
@@ -61,6 +60,7 @@ abstract class SubstanceProvider implements ProviderInterface
                 $c->get(ContextFactoryInterface::class),
                 $c->get(RendererFactoryInterface::class),
                 $c->get(ResponseFactoryInterface::class),
+                $c->get(Shares::class),
             ),
             RouteMatcherMiddleware::class => Container::autowire(...),
         ];

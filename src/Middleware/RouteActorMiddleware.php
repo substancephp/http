@@ -15,8 +15,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 use SubstancePHP\HTTP\ContextFactoryInterface;
 use SubstancePHP\HTTP\Exception\BaseException\RoutingException;
 use SubstancePHP\HTTP\RendererFactoryInterface;
+use SubstancePHP\HTTP\RenderInput;
 use SubstancePHP\HTTP\Respond;
 use SubstancePHP\HTTP\Route;
+use SubstancePHP\HTTP\Shares;
 
 /**
  * This middleware assumes there is a {@see Route} stored on the request it is processing. It uses the
@@ -35,6 +37,7 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
         private ContextFactoryInterface $contextFactory,
         private RendererFactoryInterface $rendererFactory,
         private ResponseFactoryInterface $responseFactory,
+        private Shares $shares,
     ) {
     }
 
@@ -74,11 +77,12 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
             $response = $response->withHeader($name, $values);
         }
         if (! $bodyless) {
-            $renderer = $this->rendererFactory->createRenderer(
-                $route->normalizedPath,
-                $contentType,
-                $responseData,
-            );
+            $renderer = $this->rendererFactory->createRenderer(new RenderInput(
+                path: $route->normalizedPath,
+                contentType: $contentType,
+                data: $responseData,
+                shared: fn (): array => $this->shares->resolve($context, $request),
+            ));
             $response->getBody()->write($renderer->render());
         }
         return $response;

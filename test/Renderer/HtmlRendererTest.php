@@ -515,6 +515,32 @@ class HtmlRendererTest extends TestCase
         $renderer->render();
     }
 
+    #[Test]
+    public function renderMergesSharedVariables(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/shared-vars.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+            shared: ['appName' => 'My App', 'who' => 'World'],
+        );
+        $this->assertStringContainsString('<p>My App / World</p>', $renderer->render());
+    }
+
+    #[Test]
+    public function renderDataOverridesSharedVariables(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/shared-vars.html.php',
+            data: ['appName' => 'From action'],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+            shared: ['appName' => 'Shared', 'who' => 'World'],
+        );
+        $this->assertStringContainsString('<p>From action / World</p>', $renderer->render());
+    }
+
     /** @param array<array-key, mixed> $data */
     private function makeRenderer(array $data = []): HtmlRenderer
     {

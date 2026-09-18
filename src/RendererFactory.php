@@ -11,34 +11,29 @@ use SubstancePHP\HTTP\Renderer\JsonRenderer;
 
 class RendererFactory implements RendererFactoryInterface
 {
-    /** @param non-empty-string $htmlEncoding */
-    public function __construct(
-        private string $templateRoot,
-        private string $htmlEncoding,
-        private string $defaultLayout = 'layout',
-    ) {
+    public function __construct(private Templating $templating)
+    {
     }
 
     #[\Override]
-    public function createRenderer(
-        string $normalizedRequestPath,
-        string $responseContentType,
-        mixed $responseData,
-    ): RendererInterface {
-        if (\str_starts_with($responseContentType, 'application/json')) {
-            return new JsonRenderer($responseData);
+    public function createRenderer(RenderInput $input): RendererInterface
+    {
+        if (\str_starts_with($input->contentType, 'application/json')) {
+            return new JsonRenderer($input->data);
         }
-        if (\str_starts_with($responseContentType, 'text/html')) {
-            $templatePath = "{$this->templateRoot}/{$normalizedRequestPath}.html.php";
-            $escaper = new Escaper($this->htmlEncoding);
+        if (\str_starts_with($input->contentType, 'text/html')) {
+            // The shared template variables are resolved here, lazily: only an HTML renderer uses them, so
+            // other content types (e.g. JSON) never trigger the factory.
+            $shared = ($input->shared instanceof \Closure) ? ($input->shared)() : $input->shared;
             return new HtmlRenderer(
-                templatePath: $templatePath,
-                data: $responseData,
-                escaper: $escaper,
-                templateRoot: $this->templateRoot,
-                defaultLayout: $this->defaultLayout,
+                templatePath: "{$this->templating->root}/{$input->path}.html.php",
+                data: $input->data,
+                escaper: new Escaper($this->templating->encoding),
+                templateRoot: $this->templating->root,
+                shared: $shared,
+                defaultLayout: $this->templating->defaultLayout,
             );
         }
-        throw new UnsupportedContentTypeException($responseContentType);
+        throw new UnsupportedContentTypeException($input->contentType);
     }
 }

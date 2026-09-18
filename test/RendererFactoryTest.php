@@ -12,6 +12,8 @@ use SubstancePHP\HTTP\Exception\RenderingException\UnsupportedContentTypeExcepti
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 use SubstancePHP\HTTP\Renderer\JsonRenderer;
 use SubstancePHP\HTTP\RendererFactory;
+use SubstancePHP\HTTP\Templating;
+use SubstancePHP\HTTP\RenderInput;
 use TestUtil\TestUtil;
 
 #[CoversClass(RendererFactory::class)]
@@ -21,27 +23,45 @@ class RendererFactoryTest extends TestCase
 {
     private function makeInstance(): RendererFactory
     {
-        return new RendererFactory(TestUtil::getFixtureRoot() . '/template', 'utf-8');
+        return new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8'));
     }
 
     #[Test]
     public function createRendererJson(): void
     {
-        $renderer = $this->makeInstance()->createRenderer('dummy', 'application/json', ['a' => 1]);
-        $this->assertInstanceOf(JsonRenderer::class, $renderer);
+        $input = new RenderInput('dummy', 'application/json', ['a' => 1]);
+        $this->assertInstanceOf(JsonRenderer::class, $this->makeInstance()->createRenderer($input));
     }
 
     #[Test]
     public function createRendererHtml(): void
     {
-        $renderer = $this->makeInstance()->createRenderer('dummy', 'text/html; charset=utf-8', []);
-        $this->assertInstanceOf(HtmlRenderer::class, $renderer);
+        $input = new RenderInput('dummy', 'text/html; charset=utf-8', []);
+        $this->assertInstanceOf(HtmlRenderer::class, $this->makeInstance()->createRenderer($input));
+    }
+
+    #[Test]
+    public function createRendererResolvesSharedOnlyForHtml(): void
+    {
+        $factory = $this->makeInstance();
+        $calls = 0;
+        $shared = function () use (&$calls): array {
+            $calls++;
+            return ['appName' => 'My App'];
+        };
+
+        // Only an HTML renderer needs the shared variables, so a JSON response must not resolve them.
+        $factory->createRenderer(new RenderInput('dummy', 'application/json', [], $shared));
+        $this->assertSame(0, $calls);
+
+        $factory->createRenderer(new RenderInput('dummy', 'text/html; charset=utf-8', [], $shared));
+        $this->assertSame(1, $calls);
     }
 
     #[Test]
     public function createRendererUnsupportedContentType(): void
     {
         $this->expectException(UnsupportedContentTypeException::class);
-        $this->makeInstance()->createRenderer('dummy', 'text/plain', 'body');
+        $this->makeInstance()->createRenderer(new RenderInput('dummy', 'text/plain', 'body'));
     }
 }

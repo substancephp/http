@@ -17,10 +17,13 @@ use SubstancePHP\HTTP\ContextFactoryInterface;
 use SubstancePHP\HTTP\Exception\BaseException\RoutingException;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\RendererFactory;
+use SubstancePHP\HTTP\Templating;
 use SubstancePHP\HTTP\RequestHandler;
 use SubstancePHP\HTTP\RequestParams\PathParams;
 use SubstancePHP\HTTP\Respond;
 use SubstancePHP\HTTP\Route;
+use SubstancePHP\HTTP\Shares;
+use TestUtil\Fixture\GreetingShare;
 use TestUtil\TestUtil;
 
 #[CoversClass(RouteActorMiddleware::class)]
@@ -43,8 +46,8 @@ class RouteActorMiddlewareTest extends TestCase
         $contextFactory->method('createContext')->willReturn($context);
         $responseFactory = new ResponseFactory();
         $templateRoot = TestUtil::getFixtureRoot() . '/template';
-        $rendererFactory = new RendererFactory($templateRoot, 'utf-8');
-        return new RouteActorMiddleware($container, $contextFactory, $rendererFactory, $responseFactory);
+        $rendererFactory = new RendererFactory(new Templating($templateRoot, 'utf-8'));
+        return new RouteActorMiddleware($container, $contextFactory, $rendererFactory, $responseFactory, new Shares([]));
     }
 
     #[Test]
@@ -108,14 +111,52 @@ class RouteActorMiddlewareTest extends TestCase
         $instance = new RouteActorMiddleware(
             $this->createMock(ContainerInterface::class),
             $contextFactory,
-            new RendererFactory(TestUtil::getFixtureRoot() . '/template', 'utf-8'),
+            new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
             new ResponseFactory(),
+            new Shares([]),
         );
 
         $response = $instance->process($request, $requestHandler);
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertSame("<div id=\"layout\"><h1>Store 42</h1>\n</div>\n", (string) $response->getBody());
+    }
+
+    #[Test]
+    public function processMergesSharedVariablesIntoTheTemplate(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $requestHandler = $this->createMock(RequestHandler::class);
+
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/shared-vars');
+        \assert($route instanceof Route);
+
+        $request = $requestFactory
+            ->createServerRequest('GET', '/shared-vars')
+            ->withAttribute(Route::class, $route)
+            ->withHeader('X-Who', 'World');
+
+        $context = Container::from([
+            Respond::class => function () {
+                $respond = new Respond(200);
+                $respond->setHeader('Content-Type', 'text/html');
+                return $respond;
+            },
+            GreetingShare::class => fn () => new GreetingShare(),
+        ]);
+        $contextFactory = $this->createStub(ContextFactoryInterface::class);
+        $contextFactory->method('createContext')->willReturn($context);
+        $instance = new RouteActorMiddleware(
+            $this->createMock(ContainerInterface::class),
+            $contextFactory,
+            new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
+            new ResponseFactory(),
+            new Shares([GreetingShare::class]),
+        );
+
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString('<p>My App / World</p>', (string) $response->getBody());
     }
 
     #[Test]

@@ -33,18 +33,16 @@ class Application implements ContainerInterface
     public static function make(
         array $env,
         string $actionRoot,
-        string $templateRoot,
         array $providers,
         array $middlewares,
-        string $htmlEncoding,
+        Templating $templating,
     ): self {
         // TODO Consider specialising application constructors for JSON-only or HTML-only.
         $environment = new Environment($env);
         $factorySets = \array_map(fn ($provider) => $provider::factories($environment), $providers);
         $factories = \array_merge(...$factorySets);
         $factories['substance.action-root'] = fn () => $actionRoot;
-        $factories['substance.template-root'] = fn () => $templateRoot;
-        $factories['substance.html-encoding'] = fn () => $htmlEncoding;
+        $factories[Templating::class] = fn () => $templating;
         $container = Container::from($factories);
 
         $classes = [];

@@ -21,6 +21,7 @@ use SubstancePHP\HTTP\Middleware\ExceptionHandlerMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\Middleware\RouteMatcherMiddleware;
 use SubstancePHP\HTTP\SubstanceProvider;
+use SubstancePHP\HTTP\Templating;
 use TestUtil\Fixture\ContentTypeOverrideProvider;
 use TestUtil\TestUtil;
 
@@ -50,15 +51,6 @@ class SubstanceProviderTest extends TestCase
         $this->assertArrayHasKey(RouteMatcherMiddleware::class, $result);
         $this->assertArrayHasKey('substance.http.default-content-type', $result);
         $this->assertArrayHasKey('substance.error-template', $result);
-        $this->assertArrayHasKey('substance.default-layout', $result);
-    }
-
-    #[Test]
-    public function defaultLayout(): void
-    {
-        $environment = new Environment([]);
-        $container = Container::from(SubstanceProvider::factories($environment));
-        $this->assertSame('layout', $container->get('substance.default-layout'));
     }
 
     #[Test]
@@ -75,10 +67,9 @@ class SubstanceProviderTest extends TestCase
         $instance = Application::make(
             env: [],
             actionRoot: TestUtil::getActionFixtureRoot(),
-            templateRoot: TestUtil::getFixtureRoot() . '/template',
             providers: [SubstanceProvider::class],
             middlewares: [ExceptionHandlerMiddleware::class],
-            htmlEncoding: 'utf-8',
+            templating: new Templating(TestUtil::getFixtureRoot() . '/template'),
         );
 
         $this->assertInstanceOf(
@@ -112,13 +103,12 @@ class SubstanceProviderTest extends TestCase
         $instance = Application::make(
             env: $env,
             actionRoot: $actionRoot,
-            templateRoot: $templateRoot,
             providers: [
                 SubstanceProvider::class,
                 ContentTypeOverrideProvider::class,
             ],
             middlewares: [],
-            htmlEncoding: 'utf-8',
+            templating: new Templating($templateRoot),
         );
 
         $this->assertSame('application/json', $instance->get('substance.http.default-content-type'));
