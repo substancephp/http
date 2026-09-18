@@ -1,6 +1,6 @@
 # CHANGELOG
 
-### Unreleased
+### v0.10.0
 
 Major (breaking):
 * `Application::make()` now takes a single `Templating` (the template root, the source encoding, the default
