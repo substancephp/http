@@ -148,7 +148,79 @@ final class TemplateVariablesRule implements Rule
             }
         }
 
+        $this->checkIncludeSites($node, $templates, $shared, $errors);
+
         return $errors;
+    }
+
+    /**
+     * Checks the renderer helpers that include another template, each of which resolves its name inside its
+     * own directory: what a call passes has to satisfy what the template it names declares, less the
+     * variables the application's share provides.
+     *
+     * @param array<string, array{file: string, declared: array<string, array{type: string, line: int}>}> $templates
+     * @param string[] $shared
+     * @param list<IdentifierRuleError> $errors
+     */
+    private function checkIncludeSites(
+        CollectedDataNode $node,
+        array $templates,
+        array $shared,
+        array &$errors,
+    ): void {
+        foreach ($node->get(IncludeSiteCollector::class) as $file => $sites) {
+            if (! isset($templates[self::route($file)])) {
+                // Includes only render inside a template; test code calls the renderer helpers directly.
+                continue;
+            }
+            foreach ($sites as $site) {
+                if ($site['template'] === null) {
+                    $errors[] = self::error(
+                        'The template this includes is not a literal or constant, so what it needs cannot be checked.',
+                        $file,
+                        $site['line'],
+                    );
+                    continue;
+                }
+
+                $matches = self::matching($site['template'], $templates);
+                if ($matches === []) {
+                    $errors[] = self::error(
+                        \sprintf('This includes %s, which no analysed template file provides.', $site['template']),
+                        $file,
+                        $site['line'],
+                    );
+                    continue;
+                }
+
+                foreach ($matches as $template) {
+                    foreach (self::wanted($template['declared'], $shared) as $variable => $declaration) {
+                        if (! \array_key_exists($variable, $site['provides'])) {
+                            $errors[] = self::error(
+                                \sprintf('This does not pass $%s, which %s declares.', $variable, $template['file']),
+                                $file,
+                                $site['line'],
+                            );
+                            continue;
+                        }
+                        $provided = $site['provides'][$variable];
+                        if ($this->accepts($declaration['type'], $provided) === false) {
+                            $errors[] = self::error(
+                                \sprintf(
+                                    'This passes $%s as %s, but %s declares %s.',
+                                    $variable,
+                                    $provided,
+                                    $template['file'],
+                                    $declaration['type'],
+                                ),
+                                $file,
+                                $site['line'],
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -376,6 +448,12 @@ final class TemplateVariablesRule implements Rule
     private static function match(string $pattern, string $path): ?string
     {
         return (\preg_match($pattern, $path, $matches) === 1) ? $matches['route'] : null;
+    }
+
+    /** The route a file path stands for, whether or not it is a template. */
+    private static function route(string $path): string
+    {
+        return self::match(self::TEMPLATE_FILE, $path) ?? $path;
     }
 
     /**

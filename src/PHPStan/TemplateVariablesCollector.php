@@ -16,8 +16,8 @@ use PHPStan\Type\VerbosityLevel;
  * The names come from the file itself, since a template has no signature to reflect, and each type comes
  * from the scope, where the declared tags have already been resolved. Types travel as descriptions because
  * collected data crosses files as JSON, so the pairing rule resolves them again before comparing. A template
- * that declares nothing contributes nothing, and one that does not declare `$this` is not a template at all
- * (see {@see UnescapedOutputChecker}).
+ * that declares nothing still reports an empty set, so that includes naming it can be resolved, and one that
+ * does not declare `$this` is not a template at all (see {@see UnescapedOutputChecker}).
  *
  * @implements Collector<Node\Stmt\InlineHTML, array<string, array{type: string, line: int}>>
  */
@@ -55,6 +55,6 @@ final class TemplateVariablesCollector implements Collector
                 }
             }
         }
-        return ($declared === []) ? null : $declared;
+        return $declared;
     }
 }

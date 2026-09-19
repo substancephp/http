@@ -11,6 +11,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use SubstancePHP\HTTP\PHPStan\ActionDataCollector;
+use SubstancePHP\HTTP\PHPStan\IncludeSiteCollector;
 use SubstancePHP\HTTP\PHPStan\ShareCollector;
 use SubstancePHP\HTTP\PHPStan\TemplateSelectionCollector;
 use SubstancePHP\HTTP\PHPStan\TemplateSetCollector;
@@ -38,6 +39,7 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             new ShareCollector(),
             new TemplateSelectionCollector(),
             new TemplateSetCollector(),
+            new IncludeSiteCollector(),
         ];
     }
 
@@ -121,6 +123,24 @@ final class TemplateVariablesRuleTest extends RuleTestCase
                     self::DATA . '/templates/summary.html.php',
                 ),
                 6,
+            ]],
+        );
+    }
+
+    #[Test]
+    public function checksWhatAnIncludePasses(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/includes-detail.html.php',
+                self::DATA . '/partials/detail.html.php',
+            ],
+            [[
+                \sprintf(
+                    'This passes $count as \'many\', but %s declares int.',
+                    self::DATA . '/partials/detail.html.php',
+                ),
+                10,
             ]],
         );
     }

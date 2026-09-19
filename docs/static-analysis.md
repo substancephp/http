@@ -95,6 +95,11 @@ The declared types are checked as well as the names, so a template declaring `in
 a return providing `'twelve'`. The check only speaks when it is sure: a value it can prove nothing about, such
 as one typed `mixed`, is left alone.
 
+The renderer helpers that include another template are checked in the same way. `partial()`, `layout()` and
+`beginElement()` each resolve their name inside their own directory, and what a call passes has to satisfy
+what the template it names declares. `fetch()` reads a slot rather than including a template, so it is not
+part of this, and a call from code that is not a template, such as a test, is left alone.
+
 These are reported rather than skipped, because skipping would leave the check quietly doing nothing:
 
 * a return whose data has no statically known keys, such as a bare `array` or `mixed`: return an array shape;

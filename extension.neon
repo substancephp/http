@@ -51,6 +51,10 @@ services:
         tags:
             - phpstan.collector
     -
+        class: SubstancePHP\HTTP\PHPStan\IncludeSiteCollector
+        tags:
+            - phpstan.collector
+    -
         class: SubstancePHP\HTTP\PHPStan\TemplateVariablesRule
         tags:
             - phpstan.rules.rule
