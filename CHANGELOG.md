@@ -1,6 +1,6 @@
 # CHANGELOG
 
-### Unreleased
+### v0.12.0
 
 Major (breaking):
 * Shared template data is a single `ShareInterface` implementation whose public properties are the template
