@@ -1,6 +1,6 @@
 # CHANGELOG
 
-### Unreleased
+### v0.12.2
 
 * The template-variable rule no longer reports four patterns it was wrong about: a return that renders no
   body, such as a redirect or any null return, is no longer counted as data for the template; returns from
