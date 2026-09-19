@@ -354,38 +354,62 @@ final class TemplateVariablesRule implements Rule
             return $errors;
         }
 
+        // A template is renderable when a single return provides everything it declares.
+        foreach ($variants as $variant) {
+            if ($this->satisfies($variant['keys'], $wanted)) {
+                return $errors;
+            }
+        }
+
+        $absent = false;
         foreach ($wanted as $name => $wantedDeclaration) {
-            $provided = null;
             foreach ($variants as $variant) {
-                if (! \array_key_exists($name, $variant['keys'])) {
-                    continue;
-                }
-                if ($this->accepts($wantedDeclaration['type'], $variant['keys'][$name]) === true) {
+                if (\array_key_exists($name, $variant['keys'])) {
                     continue 2;
                 }
-                $provided = $variant['keys'][$name];
             }
-            if ($provided === null) {
-                $errors[] = self::error(
-                    \sprintf('No return of this action provides $%s, which the template %s declares.', $name, $templateFile),
-                    $templateFile,
-                    $wantedDeclaration['line'],
-                );
-                continue;
-            }
+            $absent = true;
             $errors[] = self::error(
-                \sprintf(
-                    'No return of this action provides $%s as %s, which the template %s declares.',
-                    $name,
-                    $provided,
-                    $templateFile,
-                ),
+                \sprintf('No return of this action provides $%s, which the template %s declares.', $name, $templateFile),
                 $templateFile,
                 $wantedDeclaration['line'],
             );
         }
+        if ($absent) {
+            return $errors;
+        }
+
+        // Every variable is provided by some return, but never all of them by one, so nothing renders this.
+        $errors[] = self::error(
+            \sprintf(
+                'No return of this action provides %s together, which the template %s declares.',
+                \implode(', ', \array_map(static fn (string $name): string => '$' . $name, \array_keys($wanted))),
+                $templateFile,
+            ),
+            $templateFile,
+            \array_values($wanted)[0]['line'],
+        );
 
         return $errors;
+    }
+
+    /**
+     * Whether one return provides everything a template declares, with types it accepts.
+     *
+     * @param array<string, string> $keys
+     * @param array<string, array{type: string, line: int}> $wanted
+     */
+    private function satisfies(array $keys, array $wanted): bool
+    {
+        foreach ($wanted as $name => $declaration) {
+            if (! \array_key_exists($name, $keys)) {
+                return false;
+            }
+            if ($this->accepts($declaration['type'], $keys[$name]) === false) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

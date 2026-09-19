@@ -23,8 +23,8 @@ use PHPStan\Type\VerbosityLevel;
  */
 final class TemplateVariablesCollector implements Collector
 {
-    /** One `@var <type> $<name>` tag, as documented for templates. */
-    private const VARIABLE_TAG = '/@var\s+([^\s$*]+)\s+\$([A-Za-z_][A-Za-z0-9_]*)/';
+    /** One `@var <type> $<name>` tag; the type may itself contain spaces, as `array<int, string>` does. */
+    private const VARIABLE_TAG = '/@var\s+[^$]*\$([A-Za-z_][A-Za-z0-9_]*)/';
 
     public function getNodeType(): string
     {
@@ -47,9 +47,9 @@ final class TemplateVariablesCollector implements Collector
                 continue;
             }
             foreach ($matches as $match) {
-                if ($match[2] !== 'this') {
-                    $declared[$match[2]] = [
-                        'type' => $scope->getVariableType($match[2])->describe(VerbosityLevel::precise()),
+                if ($match[1] !== 'this') {
+                    $declared[$match[1]] = [
+                        'type' => $scope->getVariableType($match[1])->describe(VerbosityLevel::precise()),
                         'line' => ($index + 1),
                     ];
                 }

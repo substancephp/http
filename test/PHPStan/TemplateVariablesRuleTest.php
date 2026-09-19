@@ -144,4 +144,23 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             ]],
         );
     }
+
+    #[Test]
+    public function flagsVariablesNoSingleReturnProvidesTogether(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/actions/combined.get.php',
+                self::DATA . '/templates/combined.html.php',
+                self::DATA . '/templates/combined-alt.html.php',
+            ],
+            [[
+                \sprintf(
+                    'No return of this action provides $items, $message together, which the template %s declares.',
+                    self::DATA . '/templates/combined.html.php',
+                ),
+                8,
+            ]],
+        );
+    }
 }
