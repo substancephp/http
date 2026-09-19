@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\Test;
 use SubstancePHP\HTTP\PHPStan\ActionDataCollector;
 use SubstancePHP\HTTP\PHPStan\ShareCollector;
 use SubstancePHP\HTTP\PHPStan\TemplateSelectionCollector;
+use SubstancePHP\HTTP\PHPStan\TemplateSetCollector;
 use SubstancePHP\HTTP\PHPStan\TemplateVariablesCollector;
 use SubstancePHP\HTTP\PHPStan\TemplateVariablesRule;
 
@@ -35,6 +36,7 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             new ActionDataCollector(),
             new ShareCollector(),
             new TemplateSelectionCollector(),
+            new TemplateSetCollector(),
         ];
     }
 
@@ -80,6 +82,25 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             [[
                 'setTemplate() needs a literal or constant template name, so that the templates an action renders'
                 . ' can be checked.',
+                8,
+            ]],
+        );
+    }
+
+    #[Test]
+    public function checksATemplateAnActionDeclaresAsAnAlternative(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/actions/catalog.get.php',
+                self::DATA . '/templates/catalog.html.php',
+                self::DATA . '/templates/catalog-empty.html.php',
+            ],
+            [[
+                \sprintf(
+                    'No return of this action provides $message, which the template %s declares.',
+                    self::DATA . '/templates/catalog-empty.html.php',
+                ),
                 8,
             ]],
         );

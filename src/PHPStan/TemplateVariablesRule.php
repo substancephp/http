@@ -19,9 +19,12 @@ use PHPStan\Type\Type;
  * exactly one segment, which is the directory convention the framework documents. A template with no such
  * action is not checked, so partials, layouts, elements and error templates are left alone.
  *
+ * {@see DefaultTemplate} moves an action's default off that conventional path, and {@see AltTemplates} adds
+ * templates it may also render, so those are resolved by the names they declare.
+ *
  * The variables may come from the action's returned data or from the application's {@see ShareInterface}.
- * When the paired template is the only one the action can render, every return must provide them; when the
- * action selects other templates too, each has to be reachable from some return.
+ * When a template is the only one the action can render, every return must provide them; when the action
+ * renders others too, each template has to be reachable from some return.
  *
  * @implements Rule<CollectedDataNode>
  */
@@ -43,27 +46,100 @@ final class TemplateVariablesRule implements Rule
     {
         $actions = $node->get(ActionDataCollector::class);
         $selections = $node->get(TemplateSelectionCollector::class);
+        $declarations = $node->get(TemplateSetCollector::class);
         $shared = self::sharedVariables($node->get(ShareCollector::class));
-        $errors = [];
 
+        $templates = [];
         foreach ($node->get(TemplateVariablesCollector::class) as $templateFile => $entries) {
             $route = self::match(self::TEMPLATE_FILE, $templateFile);
             if ($route === null) {
                 continue;
             }
-
-            $declared = [];
             foreach ($entries as $entry) {
-                $declared = [...$declared, ...$entry];
+                $templates[$route]['file'] = $templateFile;
+                $templates[$route]['declared'] = [...($templates[$route]['declared'] ?? []), ...$entry];
             }
-            $wanted = \array_diff_key($declared, \array_flip($shared));
+        }
+
+        $errors = [];
+        foreach ($templates as $route => $template) {
+            $wanted = self::wanted($template['declared'], $shared);
             if ($wanted === []) {
                 continue;
             }
-
             foreach (self::paired($route, $actions) as $actionFile => $returns) {
-                foreach (self::check($actionFile, $returns, $selections[$actionFile] ?? [], $route, $templateFile, $wanted) as $error) {
-                    $errors[] = $error;
+                $declaration = self::declaration($declarations, $actionFile);
+                if ($declaration !== null
+                    && $declaration['default'] !== null
+                    && ! \str_ends_with($route, '/' . $declaration['default'])
+                ) {
+                    continue;
+                }
+                $errors = [
+                    ...$errors,
+                    ...self::check(
+                        $actionFile,
+                        $returns,
+                        $selections[$actionFile] ?? [],
+                        $declaration,
+                        $route,
+                        $template['file'],
+                        $wanted,
+                    ),
+                ];
+            }
+        }
+
+        foreach ($declarations as $actionFile => $entries) {
+            $declaration = $entries[0] ?? null;
+            if ($declaration === null) {
+                continue;
+            }
+            if ($declaration['unreadable']) {
+                $errors[] = self::error(
+                    'The template attributes here need literal or constant template names, so that the templates this'
+                    . ' action renders can be checked.',
+                    $actionFile,
+                    $declaration['line'],
+                );
+            }
+
+            $targets = $declaration['alternatives'];
+            if ($declaration['default'] !== null) {
+                $targets[] = $declaration['default'];
+            }
+            $actionRoute = self::match(self::ACTION_FILE, $actionFile) ?? '';
+            foreach (\array_unique($targets) as $target) {
+                if (\str_ends_with($actionRoute, '/' . $target)) {
+                    // The conventionally named template is already checked from the template's own side.
+                    continue;
+                }
+                $matches = self::matching($target, $templates);
+                if ($matches === []) {
+                    $errors[] = self::error(
+                        \sprintf('This action declares the template %s, which no analysed template file provides.', $target),
+                        $actionFile,
+                        $declaration['line'],
+                    );
+                    continue;
+                }
+                foreach ($matches as $route => $template) {
+                    $wanted = self::wanted($template['declared'], $shared);
+                    if ($wanted === []) {
+                        continue;
+                    }
+                    $errors = [
+                        ...$errors,
+                        ...self::check(
+                            $actionFile,
+                            $actions[$actionFile] ?? [],
+                            $selections[$actionFile] ?? [],
+                            $declaration,
+                            $route,
+                            $template['file'],
+                            $wanted,
+                        ),
+                    ];
                 }
             }
         }
@@ -72,8 +148,43 @@ final class TemplateVariablesRule implements Rule
     }
 
     /**
+     * @param array<string, list<array{line: int, default: string|null, alternatives: string[], unreadable: bool}>> $declarations
+     * @return array{line: int, default: string|null, alternatives: string[], unreadable: bool}|null
+     */
+    private static function declaration(array $declarations, string $actionFile): ?array
+    {
+        return $declarations[$actionFile][0] ?? null;
+    }
+
+    /**
+     * @param array<string, array{file: string, declared: array<string, array{type: Type, line: int}>}> $templates
+     * @return array<string, array{file: string, declared: array<string, array{type: Type, line: int}>}>
+     */
+    private static function matching(string $template, array $templates): array
+    {
+        $matching = [];
+        foreach ($templates as $route => $declaration) {
+            if (\str_ends_with($route, '/' . $template)) {
+                $matching[$route] = $declaration;
+            }
+        }
+        return $matching;
+    }
+
+    /**
+     * @param array<string, array{type: Type, line: int}> $declared
+     * @param string[] $shared
+     * @return array<string, array{type: Type, line: int}>
+     */
+    private static function wanted(array $declared, array $shared): array
+    {
+        return \array_diff_key($declared, \array_flip($shared));
+    }
+
+    /**
      * @param list<array{line: int, variants: array<int, string[]>|null}> $returns
      * @param list<array{line: int, templates: string[]|null}> $selections
+     * @param array{line: int, default: string|null, alternatives: string[], unreadable: bool}|null $declaration
      * @param array<string, array{type: Type, line: int}> $wanted
      * @return list<IdentifierRuleError>
      */
@@ -81,6 +192,7 @@ final class TemplateVariablesRule implements Rule
         string $actionFile,
         array $returns,
         array $selections,
+        ?array $declaration,
         string $templateRoute,
         string $templateFile,
         array $wanted,
@@ -102,6 +214,22 @@ final class TemplateVariablesRule implements Rule
                     $only = false;
                 }
             }
+        }
+        foreach ($declaration['alternatives'] ?? [] as $alternative) {
+            if (! \str_ends_with($templateRoute, '/' . $alternative)) {
+                $only = false;
+            }
+        }
+        $default = $declaration['default'] ?? null;
+        if ($default !== null && ! \str_ends_with($templateRoute, '/' . $default)) {
+            $only = false;
+        }
+        $actionRoute = self::match(self::ACTION_FILE, $actionFile);
+        $isConventional = $actionRoute !== null
+            && self::siblingRoots(\explode('/', $templateRoute), \explode('/', $actionRoute));
+        if ($default === null && ! $isConventional) {
+            // The action also renders the template its route resolves to.
+            $only = false;
         }
 
         $variants = [];
@@ -135,7 +263,7 @@ final class TemplateVariablesRule implements Rule
             return $errors;
         }
 
-        foreach ($wanted as $name => $declaration) {
+        foreach ($wanted as $name => $wantedDeclaration) {
             foreach ($variants as $variant) {
                 if (\in_array($name, $variant['keys'], true)) {
                     continue 2;
@@ -144,7 +272,7 @@ final class TemplateVariablesRule implements Rule
             $errors[] = self::error(
                 \sprintf('No return of this action provides $%s, which the template %s declares.', $name, $templateFile),
                 $templateFile,
-                $declaration['line'],
+                $wantedDeclaration['line'],
             );
         }
 

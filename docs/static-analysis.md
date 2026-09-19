@@ -99,6 +99,21 @@ These are reported rather than skipped, because skipping would leave the check q
 
 Both the action tree and the template tree have to be in the paths PHPStan analyses.
 
+Two attributes declare the templates an action can render, for cases the convention does not cover. Both go
+on the callback the action file returns, and both name templates relative to the template root, without the
+suffix:
+
+```php
+#[DefaultTemplate('pages/dashboard')]
+#[AltTemplates(['pages/dashboard-empty', 'pages/dashboard-error'])]
+static function (): array { /* ... */ }
+```
+
+`DefaultTemplate` replaces the route's own template as the default, and `AltTemplates` adds templates the
+action may select with `setTemplate()`. Neither has to be repeated for an action that follows the convention.
+A declared template that no analysed file provides is reported, and so is a declaration whose names are not
+literals.
+
 ## Limitations
 
 The rules are intentionally shallow, so a clean run does not prove your
