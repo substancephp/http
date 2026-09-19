@@ -18,9 +18,12 @@ use PHPStan\Type\VerbosityLevel;
  * node to report from at all. It reads each file once, remembers whether the file is a template, and says
  * nothing for files that are not.
  *
- * Types travel as descriptions, since collected data crosses files as JSON, and the last statement of a file
- * reports the final view of them: statements before the declaration block still see the declared names as
- * undefined, and the pairing rule keeps the last entry per name.
+ * Nothing is reported from the statements above the declaration block, which also keeps a `declare` or a `use`
+ * from being mistaken for the contract. The pairing rule keeps the first report per name, so the types come
+ * from the first statement the declarations apply to, before any branch can narrow a variable: a narrowing
+ * tail is not the template's contract.
+ *
+ * Types travel as descriptions, since collected data crosses files as JSON.
  *
  * @implements Collector<Node\Stmt, array<string, array{type: string, line: int}>>
  */
@@ -33,9 +36,9 @@ final class TemplateVariablesCollector implements Collector
     private const RENDERER_TAG = '/@var\s+[^$]*HtmlRenderer[^$]*\$this/';
 
     /**
-     * The declared names per file, with the line each is on, memoized: this runs once per statement.
+     * The declaration per file, memoized: this runs once per statement.
      *
-     * @var array<string, array<string, int>>
+     * @var array<string, array{from: int, lines: array<string, int>}>
      */
     private static array $declared = [];
 
@@ -48,10 +51,14 @@ final class TemplateVariablesCollector implements Collector
     public function processNode(Node $node, Scope $scope): array
     {
         $file = $scope->getFile();
-        $declared = self::$declared[$file] ??= self::declaredVariables($file);
+        $declaration = self::$declared[$file] ??= self::declaredVariables($file);
+
+        if ($node->getStartLine() < $declaration['from']) {
+            return [];
+        }
 
         $variables = [];
-        foreach ($declared as $name => $line) {
+        foreach ($declaration['lines'] as $name => $line) {
             $variables[$name] = [
                 'type' => $scope->getVariableType($name)->describe(VerbosityLevel::precise()),
                 'line' => $line,
@@ -61,36 +68,41 @@ final class TemplateVariablesCollector implements Collector
     }
 
     /**
-     * The names a template declares, with the line each is declared on, or an empty array when the file is not
-     * a template.
+     * The names a template declares, with the line each is declared on, and the first line below the
+     * declaration block: or an empty declaration when the file is not a template.
      *
-     * @return array<string, int>
+     * @return array{from: int, lines: array<string, int>}
      */
     private static function declaredVariables(string $file): array
     {
+        $empty = ['from' => \PHP_INT_MAX, 'lines' => []];
+
         $source = @\file_get_contents($file);
         if ($source === false) {
-            return [];
+            return $empty;
         }
 
         // The declaration block is documented as sitting at the top of the file, before the first output.
         $head = \strstr($source, '?>', true);
         $head = ($head === false) ? $source : $head;
         if (\preg_match(self::RENDERER_TAG, $head) !== 1) {
-            return [];
+            return $empty;
         }
 
-        $declared = [];
+        $lines = [];
+        $from = 1;
         foreach (\explode("\n", $head) as $index => $line) {
             if (\preg_match_all(self::VARIABLE_TAG, $line, $matches, \PREG_SET_ORDER) === 0) {
                 continue;
             }
+            $from = ($index + 2);
             foreach ($matches as $match) {
                 if ($match[1] !== 'this') {
-                    $declared[$match[1]] = ($index + 1);
+                    $lines[$match[1]] = ($index + 1);
                 }
             }
         }
-        return $declared;
+
+        return ['from' => $from, 'lines' => $lines];
     }
 }

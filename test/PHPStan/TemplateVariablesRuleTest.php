@@ -283,4 +283,16 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             ]],
         );
     }
+
+    #[Test]
+    public function takesTheDeclaredTypeRatherThanANarrowedTail(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/templates/narrowed.html.php',
+                self::DATA . '/BooleanShare.php',
+            ],
+            [],
+        );
+    }
 }

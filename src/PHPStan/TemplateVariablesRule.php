@@ -67,7 +67,13 @@ final class TemplateVariablesRule implements Rule
             }
             foreach ($entries as $entry) {
                 $templates[$route]['file'] = $templateFile;
-                $templates[$route]['declared'] = [...($templates[$route]['declared'] ?? []), ...$entry];
+                $declared = $templates[$route]['declared'] ?? [];
+                foreach ($entry as $name => $declaration) {
+                    // The declaration block is the contract, so the first report per name wins: a later branch
+                    // narrowing a variable must not become what the template is checked against.
+                    $declared[$name] ??= $declaration;
+                }
+                $templates[$route]['declared'] = $declared;
             }
         }
 

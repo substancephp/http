@@ -1,5 +1,13 @@
 # CHANGELOG
 
+### Unreleased
+
+* The template-variable rule no longer reports four patterns it was wrong about: a return that renders no
+  body, such as a redirect or any null return, is no longer counted as data for the template; returns from
+  helper closures declared inside an action are no longer collected as the action's data; array-shaped
+  return data keeps its keys when the values are not constant; and a variable's declared type now comes from
+  the template's declaration block rather than from a later branch that narrows it.
+
 ### v0.12.1
 
 * Index the templates PHPStan gives no inline-HTML node, so that an include naming one resolves instead of
