@@ -48,6 +48,22 @@ return static function (PathParams $params, Respond $respond): mixed {
 The default is `substance.http.default-content-type`. `application/json*` and `text/html*` have
 renderers; any other content type throws `UnsupportedContentTypeException`.
 
+## Choose the template
+
+An HTML body is rendered with the template for the route's normalized path by default. Select another with
+`setTemplate()`, relative to the template root and without the `.html.php` suffix:
+
+```php
+use SubstancePHP\HTTP\Respond;
+
+return static function (Respond $respond): mixed {
+    $respond->setTemplate('stores/detail');   // renders {templateRoot}/stores/detail.html.php
+    return ['id' => 42];
+};
+```
+
+`removeTemplate()` reverts to the route's path. For non-HTML content types the template is ignored.
+
 ## Return no body
 
 ```php

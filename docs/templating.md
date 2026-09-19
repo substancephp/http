@@ -25,7 +25,8 @@ templates/
 ## Rendering a template
 
 Your action's return value becomes the template's data, and the template file
-for a route is `{templateRoot}/{path}.html.php`.
+for a route is `{templateRoot}/{path}.html.php`. An action can render a different
+template with `$respond->setTemplate('other/path')` (see [responses.md](responses.md)).
 
 ```php
 // actions/stores.get.php

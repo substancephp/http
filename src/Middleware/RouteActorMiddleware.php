@@ -78,7 +78,7 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
         }
         if (! $bodyless) {
             $renderer = $this->rendererFactory->createRenderer(new RenderInput(
-                path: $route->normalizedPath,
+                path: $respond->getTemplate() ?? $route->normalizedPath,
                 contentType: $contentType,
                 data: $responseData,
                 shared: fn (): array => $this->shares->resolve($context, $request),

@@ -18,6 +18,9 @@ use SubstancePHP\HTTP\Respond;
 #[CoversMethod(Respond::class, 'removeHeader')]
 #[CoversMethod(Respond::class, 'getHeaderLine')]
 #[CoversMethod(Respond::class, 'getHeaders')]
+#[CoversMethod(Respond::class, 'setTemplate')]
+#[CoversMethod(Respond::class, 'getTemplate')]
+#[CoversMethod(Respond::class, 'removeTemplate')]
 #[CoversMethod(Respond::class, 'redirectTo')]
 class RespondTest extends TestCase
 {
@@ -66,6 +69,19 @@ class RespondTest extends TestCase
 
         $this->assertSame([], $instance->getHeaders());
         $this->assertSame('', $instance->getHeaderLine('Content-Type'));
+    }
+
+    #[Test]
+    public function template(): void
+    {
+        $instance = new Respond(200);
+        $this->assertNull($instance->getTemplate());
+
+        $instance->setTemplate('stores/detail');
+        $this->assertSame('stores/detail', $instance->getTemplate());
+
+        $instance->removeTemplate();
+        $this->assertNull($instance->getTemplate());
     }
 
     #[Test]

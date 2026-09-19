@@ -160,6 +160,44 @@ class RouteActorMiddlewareTest extends TestCase
     }
 
     #[Test]
+    public function processRendersTheActionSelectedTemplate(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $requestHandler = $this->createMock(RequestHandler::class);
+
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/custom-template');
+        \assert($route instanceof Route);
+
+        $request = $requestFactory
+            ->createServerRequest('GET', '/custom-template')
+            ->withAttribute(Route::class, $route);
+
+        $context = Container::from([
+            Respond::class => function () {
+                $respond = new Respond(200);
+                $respond->setHeader('Content-Type', 'text/html');
+                return $respond;
+            },
+        ]);
+        $contextFactory = $this->createStub(ContextFactoryInterface::class);
+        $contextFactory->method('createContext')->willReturn($context);
+        $instance = new RouteActorMiddleware(
+            $this->createMock(ContainerInterface::class),
+            $contextFactory,
+            new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
+            new ResponseFactory(),
+            new Shares([]),
+        );
+
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(200, $response->getStatusCode());
+        // The action's setTemplate('custom-template-alt') wins over the route path's custom-template.
+        $body = (string) $response->getBody();
+        $this->assertStringContainsString('OVERRIDE: World', $body);
+        $this->assertStringNotContainsString('DEFAULT', $body);
+    }
+
+    #[Test]
     public function processUnhappyPathNoRoute(): void
     {
         $requestFactory = new ServerRequestFactory();

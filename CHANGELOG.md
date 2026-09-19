@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### Unreleased
+
+Minor:
+* An action can render a template other than the one for its route by calling `Respond::setTemplate()`;
+  `removeTemplate()` reverts to the default. See `docs/responses.md`.
+
 ### v0.10.0
 
 Major (breaking):
