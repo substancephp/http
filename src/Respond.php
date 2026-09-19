@@ -42,7 +42,16 @@ class Respond
         $this->statusCode = $statusCode;
     }
 
-    /** Sets the status code, then returns the passed data so that an action can return it directly. */
+    /**
+     * Sets the status code, then returns the passed data so that an action can return it directly.
+     *
+     * The `T` template keeps the data's type through the call, so `return $respond(422, $data);` analyses the
+     * same as `return $data;` would. Removing it would erase the data's shape at every call site.
+     *
+     * @template T
+     * @param T $data the response data, returned unchanged
+     * @return T
+     */
     public function __invoke(int $statusCode, mixed $data = null): mixed
     {
         $this->statusCode = $statusCode;

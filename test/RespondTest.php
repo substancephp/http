@@ -36,7 +36,8 @@ class RespondTest extends TestCase
 
         $result = $instance(401);
         $this->assertSame(401, $instance->getStatusCode());
-        $this->assertNull($result);
+        // assertSame, not assertNull: the no-data call is statically null.
+        $this->assertSame(null, $result);
     }
 
     #[Test]

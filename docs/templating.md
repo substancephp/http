@@ -52,6 +52,10 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 </ul>
 ```
 
+A template declares its variables, and their types, in a `@var` block at the top of the file. The action's
+returned array keys are those variable names, and the declared types are what the static-analysis rules read
+(see [static-analysis.md](static-analysis.md)).
+
 [Back to top](#templating)
 
 ## Escaping

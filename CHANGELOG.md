@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### Unreleased
+
+* `Respond::__invoke()` is generic, so the data an action passes through it keeps its type:
+  `return $respond(200, $data);` analyses exactly as `return $data;` does. Templates' `@var` blocks are
+  documented as the contract the rules read. See `docs/static-analysis.md`.
+
 ### v0.11.0
 
 * An action can render a template other than the one for its route by calling `Respond::setTemplate()`;

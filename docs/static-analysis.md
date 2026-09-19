@@ -18,19 +18,26 @@ includes:
 (If you use [`phpstan/extension-installer`](https://github.com/phpstan/extension-installer),
 the extension is registered automatically.)
 
-For the rules to apply, each template must type `$this` as `HtmlRenderer`,
-which is required anyway for PHPStan to understand the template's API:
+For the rules to apply, each template must declare its variables in a `@var` block at the top of the file:
+`$this` as `HtmlRenderer`, then one `@var Type $name` per template variable.
 
 ```php
 <?php
 
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 
-/** @var HtmlRenderer $this */
-/** @var string $name */
+/**
+ * @var HtmlRenderer $this
+ * @var string $name
+ */
 ?>
 <h1>Hello, <?= $this->h($name) ?></h1>
 ```
+
+That block is the template's contract. The action's returned array keys are the template's variable names,
+and the declared types are read by the rules, not just the names: `@var int $count` makes `<?= $count ?>`
+provably safe, while `@var string $name` does not. A file that does not declare `$this` is not treated as a
+template, so nothing in it is checked.
 
 ## What the rules flag
 
