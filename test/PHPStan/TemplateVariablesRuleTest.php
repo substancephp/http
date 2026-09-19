@@ -255,4 +255,32 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             [],
         );
     }
+
+    #[Test]
+    public function acceptsDataBuiltInAVariable(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/actions/profile.get.php',
+                self::DATA . '/templates/profile.html.php',
+            ],
+            [],
+        );
+    }
+
+    #[Test]
+    public function stillReportsDataWithNoKnownKeyNames(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/actions/untyped.get.php',
+                self::DATA . '/templates/untyped.html.php',
+            ],
+            [[
+                'The data this return produces has no statically known keys, so the paired template cannot be'
+                . ' checked. Return an array shape, or a constant array.',
+                6,
+            ]],
+        );
+    }
 }

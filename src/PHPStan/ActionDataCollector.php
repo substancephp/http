@@ -15,8 +15,8 @@ use PHPStan\Type\VerbosityLevel;
  * shape.
  *
  * Types travel as descriptions because collected data crosses files as JSON, so the pairing rule resolves
- * them again before comparing. A return whose type has no statically known keys (an untyped `array`, `mixed`)
- * reports `null` variants, which the rule treats as unverifiable rather than as providing nothing.
+ * them again before comparing. A return whose type carries no known key names at all (an untyped `array`,
+ * `mixed`) reports `null` variants, which the rule treats as unverifiable rather than as providing nothing.
  *
  * The file-level return, which yields the callback rather than data, reports the callback's line span
  * instead, along with no variants.
@@ -68,6 +68,21 @@ final class ActionDataCollector implements Collector
                 }
             }
             $variants[] = $variant;
+        }
+
+        if ($variants === []) {
+            // A shape whose values are not constant, which is what a variable holds once assigned or what a
+            // helper documents, keeps its keys as a union of constants while saying nothing about the values.
+            // The names are then usable and each is reported as `mixed`, so the check stays quiet about types.
+            foreach ($type->getArrays() as $array) {
+                $variant = [];
+                foreach ($array->getKeyType()->getConstantStrings() as $key) {
+                    $variant[$key->getValue()] = 'mixed';
+                }
+                if ($variant !== []) {
+                    $variants[] = $variant;
+                }
+            }
         }
 
         return [
