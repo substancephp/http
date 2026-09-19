@@ -33,3 +33,4 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 <p><?= $this->partial('share', ['name' => $name]) ?></p>
 <p><?= $this->content() ?></p>
 <p><?= $this->fetch('footer') ?></p>
+<p><?= $this->asset('css/app.css') ?></p>

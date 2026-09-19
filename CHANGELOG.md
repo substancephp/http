@@ -5,6 +5,9 @@
 Minor:
 * An action can render a template other than the one for its route by calling `Respond::setTemplate()`;
   `removeTemplate()` reverts to the default. See `docs/responses.md`.
+* Add `$this->asset()`, a template helper returning cache-busted URLs for static assets, configured via
+  `Templating::$assets`. The token is the asset's content hash by default, overridable per path with a
+  `tokenResolver`. See `docs/templating.md`.
 
 ### v0.10.0
 

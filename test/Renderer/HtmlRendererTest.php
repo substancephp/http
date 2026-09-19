@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SubstancePHP\HTTP\Assets;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingElementException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingLayoutException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingPartialException;
@@ -39,6 +40,7 @@ use TestUtil\TestUtil;
 #[CoversMethod(HtmlRenderer::class, 'j')]
 #[CoversMethod(HtmlRenderer::class, 'c')]
 #[CoversMethod(HtmlRenderer::class, 'u')]
+#[CoversMethod(HtmlRenderer::class, 'asset')]
 #[CoversMethod(HtmlRenderer::class, 'partial')]
 class HtmlRendererTest extends TestCase
 {
@@ -539,6 +541,30 @@ class HtmlRendererTest extends TestCase
             shared: ['appName' => 'Shared', 'who' => 'World'],
         );
         $this->assertStringContainsString('<p>From action / World</p>', $renderer->render());
+    }
+
+    #[Test]
+    public function assetIsDelegatedToTheConfiguredAssets(): void
+    {
+        $renderer = new HtmlRenderer(
+            templatePath: TestUtil::getFixtureRoot() . '/template/dummy-vars.html.php',
+            data: [],
+            escaper: new Escaper('utf-8'),
+            templateRoot: TestUtil::getFixtureRoot() . '/template',
+            assets: new Assets(
+                root: TestUtil::getFixtureRoot() . '/asset',
+                baseUrl: '/assets',
+                tokenResolver: fn (string $path): string => 'v1',
+            ),
+        );
+        $this->assertSame('/assets/example.css?v=v1', $renderer->asset('example.css'));
+    }
+
+    #[Test]
+    public function assetThrowsWithoutConfiguration(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->makeRenderer()->asset('example.css');
     }
 
     /** @param array<array-key, mixed> $data */

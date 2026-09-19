@@ -53,6 +53,8 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
  *   it is the already-rendered output of the template layer beneath;
  * - the return value of {@see HtmlRenderer::fetch()}, since it is captured
  *   output of the templates that filled the slot;
+ * - the return value of {@see HtmlRenderer::asset()}, since an asset URL is
+ *   built from the application's configuration rather than template data;
  * - a concatenation, ternary or null-coalescing expression, or an
  *   interpolated string, made only of safe parts;
  * - a `printf()`/`vprintf()` call with a literal format string whose
@@ -229,6 +231,9 @@ final class UnescapedOutputChecker
             case 'content':
             case 'fetch':
                 // These methods emit the already-rendered output of other templates, which are checked.
+                return self::SAFE;
+            case 'asset':
+                // Asset URLs are built from the application's configuration, not from template data.
                 return self::SAFE;
         }
         return self::UNSAFE;

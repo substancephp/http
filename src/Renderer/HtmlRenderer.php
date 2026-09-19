@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SubstancePHP\HTTP\Renderer;
 
 use Laminas\Escaper\Escaper;
+use SubstancePHP\HTTP\Assets;
+use SubstancePHP\HTTP\Exception\RenderingException\MissingAssetException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingElementException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingLayoutException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingPartialException;
@@ -28,6 +30,7 @@ class HtmlRenderer implements RendererInterface
         private Escaper $escaper,
         private string $templateRoot,
         private array $shared = [],
+        private ?Assets $assets = null,
         private string $defaultLayout = 'layout',
     ) {
     }
@@ -142,6 +145,21 @@ class HtmlRenderer implements RendererInterface
     public function u(string $content): string
     {
         return $this->escaper->escapeUrl($content);
+    }
+
+    /**
+     * The cache-busted URL of an asset, delegated to the configured {@see Assets} (see `docs/templating.md`).
+     * The path is relative to the assets' root, e.g. <code>asset('css/app.css')</code>.
+     *
+     * @throws \LogicException if no {@see Assets} was configured
+     * @throws MissingAssetException if the asset file does not exist
+     */
+    public function asset(string $path): string
+    {
+        if ($this->assets === null) {
+            throw new \LogicException('No assets are configured; pass an Assets to Templating.');
+        }
+        return $this->assets->url($path);
     }
 
     /**

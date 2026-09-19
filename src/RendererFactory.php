@@ -31,6 +31,7 @@ class RendererFactory implements RendererFactoryInterface
                 escaper: new Escaper($this->templating->encoding),
                 templateRoot: $this->templating->root,
                 shared: $shared,
+                assets: $this->templating->assets,
                 defaultLayout: $this->templating->defaultLayout,
             );
         }

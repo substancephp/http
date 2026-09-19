@@ -41,9 +41,11 @@ or provable number/boolean, the result of a renderer escape method (the short
 forms `h()`, `a()`, `j()`, `c()`, `u()`, or the long forms `escapeHtml()`,
 `escapeHtmlAttr()`, `escapeJs()`, `escapeCss()`, `escapeUrl()`, or the
 deprecated `e()`), of `htmlspecialchars()`/`htmlentities()`, of `raw()`
-(see below), or of `partial()`/`content()`/`fetch()` (each emits the rendered
-output of another template, which is itself checked), or a concatenation,
-ternary, null-coalescing or interpolated string built from safe parts,
+(see below), of `partial()`/`content()`/`fetch()` (each emits the rendered
+output of another template, which is itself checked), or of `asset()` (an asset
+URL is built from your configuration, not from template data), or a
+concatenation, ternary, null-coalescing or interpolated string built from safe
+parts,
 optionally including `raw()`. Anything the rules cannot clearly classify —
 for example a dynamic call — is best effort: it may or may not be flagged.
 

@@ -20,5 +20,6 @@ class TemplatingTest extends TestCase
         $this->assertSame('utf-8', $templating->encoding);
         $this->assertSame('layout', $templating->defaultLayout);
         $this->assertSame([], $templating->shared);
+        $this->assertNull($templating->assets);
     }
 }

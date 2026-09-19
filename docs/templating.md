@@ -20,6 +20,7 @@ templates/
 - [Slots](#slots)
 - [Elements](#elements)
 - [Shared view data](#shared-view-data)
+- [Assets](#assets)
 - [Static analysis](#static-analysis)
 
 ## Rendering a template
@@ -220,6 +221,42 @@ Application::make(
 Each share is resolved from the request-scoped container and invoked once per request; the variables it
 returns reach every template layer (view, layout, partial and element) and are resolved only when an HTML
 template is rendered. The action's own data wins on a name clash.
+
+[Back to top](#templating)
+
+## Assets
+
+`$this->asset()` returns a cache-busted URL for a static asset, so a file can be served with a long `max-age`
+and still be refetched when it changes:
+
+```php
+<link rel="stylesheet" href="<?= $this->asset('css/app.css') ?>">
+<!-- /assets/css/app.css?v=9f2c1a7e -->
+```
+
+The path is relative to the assets' root, configured on the application's `Templating`:
+
+```php
+new Templating(
+    root: __DIR__ . '/templates',
+    assets: new Assets(root: __DIR__ . '/public', baseUrl: '/assets'),
+);
+```
+
+The token is the asset's content hash, computed lazily and memoised, so it changes exactly when the file
+does. To avoid hashing entirely, pass a `tokenResolver`, consulted per path. Return a token to use it (e.g. a
+deploy-wide version, or a build manifest's hashed filename), or null to fall back to the content hash:
+
+```php
+new Assets(
+    root: __DIR__ . '/public',
+    baseUrl: '/assets',
+    tokenResolver: fn (string $path): ?string => $_ENV['ASSET_VERSION'] ?? null,
+);
+```
+
+A missing asset throws `MissingAssetException`. Because `asset()` builds its URL from your configuration
+rather than from template data, the static-analysis rules treat its output as safe.
 
 [Back to top](#templating)
 
