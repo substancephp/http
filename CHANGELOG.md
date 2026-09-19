@@ -10,6 +10,8 @@ Major (breaking):
   the application binds nothing, and `EmptyShare` is the default. See `docs/templating.md`.
 
 Minor:
+* The PHPStan extension also checks that the variables a template declares are provided by the action it
+  renders for, or by the application's share. See `docs/static-analysis.md`.
 * `Respond::__invoke()` is generic, so the data an action passes through it keeps its type:
   `return $respond(200, $data);` analyses exactly as `return $data;` does. Templates' `@var` blocks are
   documented as the contract the rules read. See `docs/static-analysis.md`.

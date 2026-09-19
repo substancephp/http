@@ -1,10 +1,11 @@
-# Static analysis: catching unescaped output
+# Static analysis
 
 `substancephp/http` bundles a small PHPStan extension that nudges you to
-escape the output in `HtmlRenderer` templates. It is a best-effort lint, not
-a security tool: it catches a common failure mode — forgetting to escape —
-and you remain responsible for preventing XSS. See
-[Limitations](#limitations) for what it deliberately does not do.
+escape the output in `HtmlRenderer` templates, and to give your templates the
+variables they declare. It is a best-effort lint, not a security tool: it
+catches a common failure mode, forgetting to escape, and you remain
+responsible for preventing XSS. See [Limitations](#limitations) for what it
+deliberately does not do.
 
 ## Enabling
 
@@ -40,7 +41,7 @@ action's data wins. The declared types are read by the rules, not just the names
 `<?= $count ?>` provably safe, while `@var string $name` does not. A file that does not declare `$this` is
 not treated as a template, so nothing in it is checked.
 
-## What the rules flag
+## Escaping rules
 
 Output statements — `echo`/`<?= ?>`, `print`, `die()`/`exit()`,
 `printf()`/`vprintf()`, `var_dump()`, `print_r()` — are flagged as
@@ -77,6 +78,26 @@ needed:
 Only pass content you are certain contains no user input. (As an alternative,
 you can configure `ignoreErrors` for `substancephp.unescapedOutput` in your
 `phpstan.neon`.)
+
+## Template variables
+
+Templates are also checked against the action they render for. A template pairs with an action by the
+directory convention: their paths are the same depth and differ in exactly one segment, which is the root
+directory (`actions/stores.get.php` with `templates/stores.html.php`). A template that pairs with nothing is
+not checked, so partials, layouts, elements and error templates are left alone.
+
+Every variable the action's returns do not provide has to come from the application's share, so a template
+may rely on `$appName` being shared (see [Shared view data](templating.md#shared-view-data)). Where the
+action renders only that one template, every return has to provide the variables it declares; where the
+action selects others with `setTemplate()`, each template has to be reachable from some return.
+
+These are reported rather than skipped, because skipping would leave the check quietly doing nothing:
+
+* a return whose data has no statically known keys, such as a bare `array` or `mixed`: return an array shape;
+* `setTemplate()` with anything but a literal or a constant;
+* a template variable that nothing provides.
+
+Both the action tree and the template tree have to be in the paths PHPStan analyses.
 
 ## Limitations
 
