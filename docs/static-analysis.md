@@ -34,10 +34,11 @@ use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 <h1>Hello, <?= $this->h($name) ?></h1>
 ```
 
-That block is the template's contract. The action's returned array keys are the template's variable names,
-and the declared types are read by the rules, not just the names: `@var int $count` makes `<?= $count ?>`
-provably safe, while `@var string $name` does not. A file that does not declare `$this` is not treated as a
-template, so nothing in it is checked.
+That block is the template's contract: its variables are the action's returned array keys merged with the
+shared variables (see [Shared view data](templating.md#shared-view-data)); where both provide a name, the
+action's data wins. The declared types are read by the rules, not just the names: `@var int $count` makes
+`<?= $count ?>` provably safe, while `@var string $name` does not. A file that does not declare `$this` is
+not treated as a template, so nothing in it is checked.
 
 ## What the rules flag
 
