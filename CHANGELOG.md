@@ -1,8 +1,7 @@
 # CHANGELOG
 
-### Unreleased
+### v0.11.0
 
-Minor:
 * An action can render a template other than the one for its route by calling `Respond::setTemplate()`;
   `removeTemplate()` reverts to the default. See `docs/responses.md`.
 * Add `$this->asset()`, a template helper returning cache-busted URLs for static assets, configured via
