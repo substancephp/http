@@ -91,6 +91,10 @@ may rely on `$appName` being shared (see [Shared view data](templating.md#shared
 action renders only that one template, every return has to provide the variables it declares; where the
 action selects others with `setTemplate()`, each template has to be reachable from some return.
 
+The declared types are checked as well as the names, so a template declaring `int $count` is not satisfied by
+a return providing `'twelve'`. The check only speaks when it is sure: a value it can prove nothing about, such
+as one typed `mixed`, is left alone.
+
 These are reported rather than skipped, because skipping would leave the check quietly doing nothing:
 
 * a return whose data has no statically known keys, such as a bare `array` or `mixed`: return an array shape;

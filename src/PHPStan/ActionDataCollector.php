@@ -7,14 +7,17 @@ namespace SubstancePHP\HTTP\PHPStan;
 use PhpParser\Node;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
+use PHPStan\Type\VerbosityLevel;
 
 /**
- * The keys a single `return` statement in an action provides, one entry per possible shape.
+ * The variables a single `return` statement in an action provides, with their types, one entry per possible
+ * shape.
  *
- * A return whose type has no statically known keys (an untyped `array`, `mixed`) reports `null` variants,
- * which the pairing rule treats as unverifiable rather than as providing nothing.
+ * Types travel as descriptions because collected data crosses files as JSON, so the pairing rule resolves
+ * them again before comparing. A return whose type has no statically known keys (an untyped `array`, `mixed`)
+ * reports `null` variants, which the rule treats as unverifiable rather than as providing nothing.
  *
- * @implements Collector<Node\Stmt\Return_, array{line: int, variants: array<int, string[]>|null}>
+ * @implements Collector<Node\Stmt\Return_, array{line: int, variants: array<int, array<string, string>>|null}>
  */
 final class ActionDataCollector implements Collector
 {
@@ -23,7 +26,7 @@ final class ActionDataCollector implements Collector
         return Node\Stmt\Return_::class;
     }
 
-    /** @return array{line: int, variants: array<int, string[]>|null}|null */
+    /** @return array{line: int, variants: array<int, array<string, string>>|null}|null */
     public function processNode(Node $node, Scope $scope): ?array
     {
         // Action files return their callback at the top level; only returns inside it are response data.
@@ -43,13 +46,16 @@ final class ActionDataCollector implements Collector
 
         $variants = [];
         foreach ($type->getConstantArrays() as $shape) {
-            $keys = [];
-            foreach ($shape->getKeyTypes() as $keyType) {
-                foreach ($keyType->getConstantStrings() as $constant) {
-                    $keys[] = $constant->getValue();
+            $keyTypes = $shape->getKeyTypes();
+            $valueTypes = $shape->getValueTypes();
+            $variant = [];
+            foreach ($keyTypes as $index => $keyType) {
+                $keys = $keyType->getConstantStrings();
+                if ((\count($keys) === 1) && isset($valueTypes[$index])) {
+                    $variant[$keys[0]->getValue()] = $valueTypes[$index]->describe(VerbosityLevel::precise());
                 }
             }
-            $variants[] = \array_values(\array_unique($keys));
+            $variants[] = $variant;
         }
 
         return [

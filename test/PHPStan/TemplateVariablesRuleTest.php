@@ -6,6 +6,7 @@ namespace Test\PHPStan;
 
 use PhpParser\Node;
 use PHPStan\Collectors\Collector;
+use PHPStan\PhpDoc\TypeStringResolver;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,7 +25,7 @@ final class TemplateVariablesRuleTest extends RuleTestCase
     #[\Override]
     protected function getRule(): TemplateVariablesRule
     {
-        return new TemplateVariablesRule();
+        return new TemplateVariablesRule(self::getContainer()->getByType(TypeStringResolver::class));
     }
 
     /** @return array<Collector<Node, mixed>> */
@@ -102,6 +103,24 @@ final class TemplateVariablesRuleTest extends RuleTestCase
                     self::DATA . '/templates/catalog-empty.html.php',
                 ),
                 8,
+            ]],
+        );
+    }
+
+    #[Test]
+    public function flagsAVariableOfTheWrongType(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/actions/summary.get.php',
+                self::DATA . '/templates/summary.html.php',
+            ],
+            [[
+                \sprintf(
+                    'This return provides $count as \'twelve\', but the template %s declares int.',
+                    self::DATA . '/templates/summary.html.php',
+                ),
+                6,
             ]],
         );
     }

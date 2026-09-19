@@ -7,10 +7,10 @@ namespace SubstancePHP\HTTP\PHPStan;
 use PhpParser\Node;
 use PHPStan\Analyser\Scope;
 use PHPStan\Node\CollectedDataNode;
+use PHPStan\PhpDoc\TypeStringResolver;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
-use PHPStan\Type\Type;
 
 /**
  * Checks that the variables a template declares are provided by the action it renders for.
@@ -35,6 +35,10 @@ final class TemplateVariablesRule implements Rule
 
     /** A template file: `<...>/<route path>.html.php`. */
     private const TEMPLATE_FILE = '#^(?<route>.*)\.html\.php$#';
+
+    public function __construct(private TypeStringResolver $typeResolver)
+    {
+    }
 
     public function getNodeType(): string
     {
@@ -77,7 +81,7 @@ final class TemplateVariablesRule implements Rule
                 }
                 $errors = [
                     ...$errors,
-                    ...self::check(
+                    ...$this->check(
                         $actionFile,
                         $returns,
                         $selections[$actionFile] ?? [],
@@ -130,7 +134,7 @@ final class TemplateVariablesRule implements Rule
                     }
                     $errors = [
                         ...$errors,
-                        ...self::check(
+                        ...$this->check(
                             $actionFile,
                             $actions[$actionFile] ?? [],
                             $selections[$actionFile] ?? [],
@@ -157,8 +161,8 @@ final class TemplateVariablesRule implements Rule
     }
 
     /**
-     * @param array<string, array{file: string, declared: array<string, array{type: Type, line: int}>}> $templates
-     * @return array<string, array{file: string, declared: array<string, array{type: Type, line: int}>}>
+     * @param array<string, array{file: string, declared: array<string, array{type: string, line: int}>}> $templates
+     * @return array<string, array{file: string, declared: array<string, array{type: string, line: int}>}>
      */
     private static function matching(string $template, array $templates): array
     {
@@ -172,9 +176,9 @@ final class TemplateVariablesRule implements Rule
     }
 
     /**
-     * @param array<string, array{type: Type, line: int}> $declared
+     * @param array<string, array{type: string, line: int}> $declared
      * @param string[] $shared
-     * @return array<string, array{type: Type, line: int}>
+     * @return array<string, array{type: string, line: int}>
      */
     private static function wanted(array $declared, array $shared): array
     {
@@ -182,13 +186,13 @@ final class TemplateVariablesRule implements Rule
     }
 
     /**
-     * @param list<array{line: int, variants: array<int, string[]>|null}> $returns
+     * @param list<array{line: int, variants: array<int, array<string, string>>|null}> $returns
      * @param list<array{line: int, templates: string[]|null}> $selections
      * @param array{line: int, default: string|null, alternatives: string[], unreadable: bool}|null $declaration
-     * @param array<string, array{type: Type, line: int}> $wanted
+     * @param array<string, array{type: string, line: int}> $wanted
      * @return list<IdentifierRuleError>
      */
-    private static function check(
+    private function check(
         string $actionFile,
         array $returns,
         array $selections,
@@ -250,45 +254,65 @@ final class TemplateVariablesRule implements Rule
 
         if ($only) {
             foreach ($variants as $variant) {
-                $errors = [
-                    ...$errors,
-                    ...self::missing(
-                        \array_diff_key($wanted, \array_flip($variant['keys'])),
-                        $actionFile,
-                        $variant['line'],
-                        \sprintf('This return does not provide $%%s, which the template %s declares.', $templateFile),
-                    ),
-                ];
+                foreach ($wanted as $name => $wantedDeclaration) {
+                    if (! \array_key_exists($name, $variant['keys'])) {
+                        $errors[] = self::error(
+                            \sprintf('This return does not provide $%s, which the template %s declares.', $name, $templateFile),
+                            $actionFile,
+                            $variant['line'],
+                        );
+                        continue;
+                    }
+                    $provided = $variant['keys'][$name];
+                    if ($this->accepts($wantedDeclaration['type'], $provided) === false) {
+                        $errors[] = self::error(
+                            \sprintf(
+                                'This return provides $%s as %s, but the template %s declares %s.',
+                                $name,
+                                $provided,
+                                $templateFile,
+                                $wantedDeclaration['type'],
+                            ),
+                            $actionFile,
+                            $variant['line'],
+                        );
+                    }
+                }
             }
             return $errors;
         }
 
         foreach ($wanted as $name => $wantedDeclaration) {
+            $provided = null;
             foreach ($variants as $variant) {
-                if (\in_array($name, $variant['keys'], true)) {
+                if (! \array_key_exists($name, $variant['keys'])) {
+                    continue;
+                }
+                if ($this->accepts($wantedDeclaration['type'], $variant['keys'][$name]) === true) {
                     continue 2;
                 }
+                $provided = $variant['keys'][$name];
+            }
+            if ($provided === null) {
+                $errors[] = self::error(
+                    \sprintf('No return of this action provides $%s, which the template %s declares.', $name, $templateFile),
+                    $templateFile,
+                    $wantedDeclaration['line'],
+                );
+                continue;
             }
             $errors[] = self::error(
-                \sprintf('No return of this action provides $%s, which the template %s declares.', $name, $templateFile),
+                \sprintf(
+                    'No return of this action provides $%s as %s, which the template %s declares.',
+                    $name,
+                    $provided,
+                    $templateFile,
+                ),
                 $templateFile,
                 $wantedDeclaration['line'],
             );
         }
 
-        return $errors;
-    }
-
-    /**
-     * @param array<string, array{type: Type, line: int}> $missing
-     * @return list<IdentifierRuleError>
-     */
-    private static function missing(array $missing, string $file, int $line, string $message): array
-    {
-        $errors = [];
-        foreach (\array_keys($missing) as $name) {
-            $errors[] = self::error(\sprintf($message, $name), $file, $line);
-        }
         return $errors;
     }
 
@@ -312,8 +336,8 @@ final class TemplateVariablesRule implements Rule
     }
 
     /**
-     * @param array<string, list<array{line: int, variants: array<int, string[]>|null}>> $actions
-     * @return array<string, list<array{line: int, variants: array<int, string[]>|null}>>
+     * @param array<string, list<array{line: int, variants: array<int, array<string, string>>|null}>> $actions
+     * @return array<string, list<array{line: int, variants: array<int, array<string, string>>|null}>>
      */
     private static function paired(string $templateRoute, array $actions): array
     {
@@ -352,6 +376,28 @@ final class TemplateVariablesRule implements Rule
     private static function match(string $pattern, string $path): ?string
     {
         return (\preg_match($pattern, $path, $matches) === 1) ? $matches['route'] : null;
+    }
+
+    /**
+     * Whether what an action provides satisfies the type a template declares, both given as type
+     * descriptions because collected data crosses files as JSON.
+     *
+     * `null` means no decision was reached, either because a description could not be resolved or because
+     * PHPStan cannot prove the relation either way, such as a `mixed` provided value. A pair left undecided
+     * is not reported, so the check only speaks when it is sure.
+     */
+    private function accepts(string $declared, string $provided): ?bool
+    {
+        try {
+            $result = $this->typeResolver->resolve($declared)
+                ->isSuperTypeOf($this->typeResolver->resolve($provided));
+        } catch (\Throwable) {
+            return null;
+        }
+        if ($result->yes()) {
+            return true;
+        }
+        return $result->no() ? false : null;
     }
 
     private static function error(string $message, string $file, int $line): IdentifierRuleError

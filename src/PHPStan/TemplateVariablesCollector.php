@@ -7,17 +7,19 @@ namespace SubstancePHP\HTTP\PHPStan;
 use PhpParser\Node;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
-use PHPStan\Type\Type;
+use PHPStan\Type\VerbosityLevel;
 
 /**
- * One template's declared variables: the `@var` block at the top of the file, name to resolved type.
+ * One template's declared variables: the `@var` block at the top of the file, name to type description and
+ * line.
  *
  * The names come from the file itself, since a template has no signature to reflect, and each type comes
- * from the scope, where the declared tags have already been resolved. A template that declares nothing
- * contributes nothing, and one that does not declare `$this` is not a template at all (see
- * {@see UnescapedOutputChecker}).
+ * from the scope, where the declared tags have already been resolved. Types travel as descriptions because
+ * collected data crosses files as JSON, so the pairing rule resolves them again before comparing. A template
+ * that declares nothing contributes nothing, and one that does not declare `$this` is not a template at all
+ * (see {@see UnescapedOutputChecker}).
  *
- * @implements Collector<Node\Stmt\InlineHTML, array<string, array{type: Type, line: int}>>
+ * @implements Collector<Node\Stmt\InlineHTML, array<string, array{type: string, line: int}>>
  */
 final class TemplateVariablesCollector implements Collector
 {
@@ -29,7 +31,7 @@ final class TemplateVariablesCollector implements Collector
         return Node\Stmt\InlineHTML::class;
     }
 
-    /** @return array<string, array{type: Type, line: int}>|null */
+    /** @return array<string, array{type: string, line: int}>|null */
     public function processNode(Node $node, Scope $scope): ?array
     {
         $source = @\file_get_contents($scope->getFile());
@@ -46,7 +48,10 @@ final class TemplateVariablesCollector implements Collector
             }
             foreach ($matches as $match) {
                 if ($match[2] !== 'this') {
-                    $declared[$match[2]] = ['type' => $scope->getVariableType($match[2]), 'line' => ($index + 1)];
+                    $declared[$match[2]] = [
+                        'type' => $scope->getVariableType($match[2])->describe(VerbosityLevel::precise()),
+                        'line' => ($index + 1),
+                    ];
                 }
             }
         }
