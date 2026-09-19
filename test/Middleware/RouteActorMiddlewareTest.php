@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use SubstancePHP\Container\Container;
@@ -120,6 +121,56 @@ class RouteActorMiddlewareTest extends TestCase
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('text/html', $response->getHeaderLine('Content-Type'));
         $this->assertSame("<div id=\"layout\"><h1>Store 42</h1>\n</div>\n", (string) $response->getBody());
+    }
+
+    /**
+     * A route whose path has dynamic segments renders the template named after the declared segments, which
+     * may be nested (e.g. `accounts/[id]/posts/[postId].html.php`), with the captured params as data.
+     *
+     * @param string $path a request path that resolves to a parameterized action
+     * @param string $normalizedPath the route's declared path, which is also the template path
+     * @param string $expected a substring of the rendered body
+     */
+    #[Test]
+    #[TestWith(['/accounts/42/profile', 'accounts/[id]/profile', 'Profile 42'])]
+    #[TestWith(['/accounts/42/posts/99', 'accounts/[id]/posts/[postId]', 'Post 99 of 42'])]
+    public function processRendersTemplatesInNestedParameterizedDirectories(
+        string $path,
+        string $normalizedPath,
+        string $expected,
+    ): void {
+        $requestFactory = new ServerRequestFactory();
+        $requestHandler = $this->createMock(RequestHandler::class);
+
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', $path);
+        \assert($route instanceof Route);
+        $this->assertSame($normalizedPath, $route->normalizedPath);
+
+        $request = $requestFactory
+            ->createServerRequest('GET', $path)
+            ->withAttribute(Route::class, $route);
+
+        $context = Container::from([
+            PathParams::class => fn () => PathParams::fromRequest($request),
+            Respond::class => function () {
+                $respond = new Respond(200);
+                $respond->setHeader('Content-Type', 'text/html');
+                return $respond;
+            },
+        ]);
+        $contextFactory = $this->createStub(ContextFactoryInterface::class);
+        $contextFactory->method('createContext')->willReturn($context);
+        $instance = new RouteActorMiddleware(
+            $this->createMock(ContainerInterface::class),
+            $contextFactory,
+            new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
+            new ResponseFactory(),
+            new Shares([]),
+        );
+
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString($expected, (string) $response->getBody());
     }
 
     #[Test]
