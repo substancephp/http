@@ -183,49 +183,44 @@ names do not collide, and their slots never leak into the page.
 ## Shared view data
 
 Data that many templates need (e.g. CSRF fields, navigation state, the current user, flash messages) need not
-be returned by every action. Group it into a `ShareInterface` implementation (a *share*). A share may
-contribute any number of variables:
+be returned by every action. Implement `ShareInterface` on a class whose public properties are the variables,
+and name that class in the application's `Templating`:
 
 ```php
-final class GlobalCopyShare implements ShareInterface
+final readonly class AppShared implements ShareInterface
 {
-    public function __invoke(ContainerInterface $context, ServerRequestInterface $request): array
-    {
-        return ['appName' => 'My App', 'footer' => 'Powered by My App'];
+    public string $who;
+
+    public function __construct(
+        ServerRequestInterface $request,
+        public string $appName = 'My App',
+    ) {
+        $this->who = $request->getHeaderLine('X-Who');
     }
 }
 ```
-
-```php
-final class CsrfShare implements ShareInterface
-{
-    public function __invoke(ContainerInterface $context, ServerRequestInterface $request): array
-    {
-        return ['csrf' => $context->get(CsrfTokens::class)->pair($request)];
-    }
-}
-```
-
-Register each share as a container service, then list its class in the application's `Templating`:
 
 ```php
 Application::make(
     // ...
-    templating: new Templating(
-        root: __DIR__ . '/templates',
-        shared: [GlobalCopyShare::class, CsrfShare::class],
-    ),
+    templating: new Templating(root: __DIR__ . '/templates', share: AppShared::class),
 );
 ```
 
 ```php
 <title><?= $this->h($appName) ?></title>
-<input type="hidden" name="<?= $this->a($csrf->field) ?>" value="<?= $this->a($csrf->token) ?>">
+<p>Hello, <?= $this->h($who) ?></p>
 ```
 
-Each share is resolved from the request-scoped container and invoked once per request; the variables it
-returns reach every template layer (view, layout, partial and element) and are resolved only when an HTML
-template is rendered. The action's own data wins on a name clash.
+The class is resolved once per request from the request-scoped container, so its constructor may require
+request-scoped dependencies. Bind it as a container service when it needs configuration; an unbound class is
+autowired, resolving each constructor parameter by type or falling back to its default. Its properties reach
+every template layer (view, layout, partial and element), and are resolved only when an HTML template is
+rendered. The action's own data wins on a name clash.
+
+The set of names is fixed: a variable that only some requests have is a nullable property, so a template can
+rely on every shared variable being defined. With no shared data at all, the default `EmptyShare` contributes
+nothing. See [static-analysis.md](static-analysis.md) for how a template declares them.
 
 [Back to top](#templating)
 

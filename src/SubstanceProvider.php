@@ -39,7 +39,7 @@ abstract class SubstanceProvider implements ProviderInterface
             ),
             ResponseFactoryInterface::class => fn () => new ResponseFactory(),
             RendererFactoryInterface::class => fn ($c) => new RendererFactory($c->get(Templating::class)),
-            Shares::class => fn ($c) => new Shares($c->get(Templating::class)->shared),
+            Share::class => fn ($c) => new Share($c->get(Templating::class)->share),
 
             // middleware
             BodyParserMiddleware::class => fn () => new BodyParserMiddleware(),
@@ -50,7 +50,7 @@ abstract class SubstanceProvider implements ProviderInterface
                 templateRoot: $c->get(Templating::class)->root,
                 container: $c,
                 contextFactory: $c->get(ContextFactoryInterface::class),
-                shares: $c->get(Shares::class),
+                share: $c->get(Share::class),
                 errorTemplatePath: $c->get('substance.error-template'),
                 logger: $c->has(LoggerInterface::class) ? $c->get(LoggerInterface::class) : null,
             ),
@@ -60,7 +60,7 @@ abstract class SubstanceProvider implements ProviderInterface
                 $c->get(ContextFactoryInterface::class),
                 $c->get(RendererFactoryInterface::class),
                 $c->get(ResponseFactoryInterface::class),
-                $c->get(Shares::class),
+                $c->get(Share::class),
             ),
             RouteMatcherMiddleware::class => Container::autowire(...),
         ];

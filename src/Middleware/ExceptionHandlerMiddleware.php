@@ -12,12 +12,14 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use SubstancePHP\HTTP\ContextFactoryInterface;
+use SubstancePHP\HTTP\EmptyShare;
 use SubstancePHP\HTTP\ErrorResponseFallbackGeneratorInterface;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 use SubstancePHP\HTTP\RendererFactoryInterface;
 use SubstancePHP\HTTP\RenderInput;
-use SubstancePHP\HTTP\Shares;
+use SubstancePHP\HTTP\Share;
+use SubstancePHP\HTTP\ShareInterface;
 use SubstancePHP\HTTP\Util\Json;
 
 /**
@@ -65,7 +67,7 @@ class ExceptionHandlerMiddleware implements MiddlewareInterface
         private string $templateRoot,
         private ContainerInterface $container,
         private ContextFactoryInterface $contextFactory,
-        private Shares $shares,
+        private Share $share,
         private string $errorTemplatePath = 'error',
         private ?LoggerInterface $logger = null,
     ) {
@@ -180,25 +182,23 @@ class ExceptionHandlerMiddleware implements MiddlewareInterface
             path: $templatePath,
             contentType: self::CONTENT_TYPE_HTML,
             data: ['error' => $message, 'statusCode' => $statusCode],
-            shared: fn (): array => $this->resolveShared($request),
+            share: fn (): ShareInterface => $this->resolveShare($request),
         ));
         return $renderer->render();
     }
 
     /**
-     * Best-effort resolution of the application's shared template variables for an error page: because the
-     * error may have occurred before the request-scoped context could be built, any failure falls back to no
-     * shared variables, so the error path itself can never fail.
-     *
-     * @return array<string, mixed>
+     * Best-effort resolution of the application's share for an error page: because the error may have
+     * occurred before the request-scoped context could be built, any failure falls back to an
+     * {@see EmptyShare}, so the error path itself can never fail.
      */
-    private function resolveShared(ServerRequestInterface $request): array
+    private function resolveShare(ServerRequestInterface $request): ShareInterface
     {
         try {
             $context = $this->contextFactory->createContext($this->container, $request);
-            return $this->shares->resolve($context, $request);
+            return $this->share->resolve($context);
         } catch (\Throwable) {
-            return [];
+            return new EmptyShare();
         }
     }
 

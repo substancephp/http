@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\ContextFactoryInterface;
+use SubstancePHP\HTTP\EmptyShare;
 use SubstancePHP\HTTP\Exception\BaseException\RoutingException;
 use SubstancePHP\HTTP\Middleware\RouteActorMiddleware;
 use SubstancePHP\HTTP\RendererFactory;
@@ -23,7 +24,7 @@ use SubstancePHP\HTTP\RequestHandler;
 use SubstancePHP\HTTP\RequestParams\PathParams;
 use SubstancePHP\HTTP\Respond;
 use SubstancePHP\HTTP\Route;
-use SubstancePHP\HTTP\Shares;
+use SubstancePHP\HTTP\Share;
 use TestUtil\Fixture\GreetingShare;
 use TestUtil\TestUtil;
 
@@ -48,7 +49,13 @@ class RouteActorMiddlewareTest extends TestCase
         $responseFactory = new ResponseFactory();
         $templateRoot = TestUtil::getFixtureRoot() . '/template';
         $rendererFactory = new RendererFactory(new Templating($templateRoot, 'utf-8'));
-        return new RouteActorMiddleware($container, $contextFactory, $rendererFactory, $responseFactory, new Shares([]));
+        return new RouteActorMiddleware(
+            $container,
+            $contextFactory,
+            $rendererFactory,
+            $responseFactory,
+            new Share(EmptyShare::class),
+        );
     }
 
     #[Test]
@@ -114,7 +121,7 @@ class RouteActorMiddlewareTest extends TestCase
             $contextFactory,
             new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
             new ResponseFactory(),
-            new Shares([]),
+            new Share(EmptyShare::class),
         );
 
         $response = $instance->process($request, $requestHandler);
@@ -165,7 +172,7 @@ class RouteActorMiddlewareTest extends TestCase
             $contextFactory,
             new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
             new ResponseFactory(),
-            new Shares([]),
+            new Share(EmptyShare::class),
         );
 
         $response = $instance->process($request, $requestHandler);
@@ -193,7 +200,7 @@ class RouteActorMiddlewareTest extends TestCase
                 $respond->setHeader('Content-Type', 'text/html');
                 return $respond;
             },
-            GreetingShare::class => fn () => new GreetingShare(),
+            GreetingShare::class => fn () => new GreetingShare($request),
         ]);
         $contextFactory = $this->createStub(ContextFactoryInterface::class);
         $contextFactory->method('createContext')->willReturn($context);
@@ -202,7 +209,7 @@ class RouteActorMiddlewareTest extends TestCase
             $contextFactory,
             new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
             new ResponseFactory(),
-            new Shares([GreetingShare::class]),
+            new Share(GreetingShare::class),
         );
 
         $response = $instance->process($request, $requestHandler);
@@ -237,7 +244,7 @@ class RouteActorMiddlewareTest extends TestCase
             $contextFactory,
             new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
             new ResponseFactory(),
-            new Shares([]),
+            new Share(EmptyShare::class),
         );
 
         $response = $instance->process($request, $requestHandler);

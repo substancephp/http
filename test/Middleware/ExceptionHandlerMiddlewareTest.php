@@ -17,11 +17,12 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use SubstancePHP\Container\Container;
 use SubstancePHP\HTTP\ContextFactory;
+use SubstancePHP\HTTP\EmptyShare;
 use SubstancePHP\HTTP\ErrorResponseFallbackGenerator;
 use SubstancePHP\HTTP\Exception\BaseException\UserError;
 use SubstancePHP\HTTP\Middleware\ExceptionHandlerMiddleware;
 use SubstancePHP\HTTP\RendererFactory;
-use SubstancePHP\HTTP\Shares;
+use SubstancePHP\HTTP\Share;
 use SubstancePHP\HTTP\Templating;
 use TestUtil\Fixture\GreetingShare;
 use TestUtil\TestUtil;
@@ -42,7 +43,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
             templateRoot: '',
             container: Container::from([]),
             contextFactory: new ContextFactory(),
-            shares: new Shares([]),
+            share: new Share(EmptyShare::class),
         );
         $this->assertInstanceOf(ExceptionHandlerMiddleware::class, $instance);
     }
@@ -385,8 +386,10 @@ class ExceptionHandlerMiddlewareTest extends TestCase
             }
         };
 
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/')
+            ->withHeader('Accept', 'text/html');
         $container = Container::from([
-            GreetingShare::class => fn () => new GreetingShare(),
+            GreetingShare::class => fn () => new GreetingShare($request),
         ]);
         $responseFactory = new ResponseFactory();
         $instance = $this->makeInstance(
@@ -394,11 +397,9 @@ class ExceptionHandlerMiddlewareTest extends TestCase
             null,
             TestUtil::getFixtureRoot() . '/template',
             $container,
-            new Shares([GreetingShare::class]),
+            new Share(GreetingShare::class),
         );
 
-        $request = (new ServerRequestFactory())->createServerRequest('GET', '/')
-            ->withHeader('Accept', 'text/html');
         $response = $instance->process($request, $requestHandler);
 
         $this->assertSame(503, $response->getStatusCode());
@@ -410,7 +411,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
         ?LoggerInterface $logger,
         string $templateRoot = '',
         ?ContainerInterface $container = null,
-        ?Shares $shares = null,
+        ?Share $share = null,
     ): ExceptionHandlerMiddleware {
         return new ExceptionHandlerMiddleware(
             responseFactory: $responseFactory,
@@ -419,7 +420,7 @@ class ExceptionHandlerMiddlewareTest extends TestCase
             templateRoot: $templateRoot,
             container: $container ?? Container::from([]),
             contextFactory: new ContextFactory(),
-            shares: $shares ?? new Shares([]),
+            share: $share ?? new Share(EmptyShare::class),
             logger: $logger,
         );
     }

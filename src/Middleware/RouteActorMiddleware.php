@@ -18,7 +18,8 @@ use SubstancePHP\HTTP\RendererFactoryInterface;
 use SubstancePHP\HTTP\RenderInput;
 use SubstancePHP\HTTP\Respond;
 use SubstancePHP\HTTP\Route;
-use SubstancePHP\HTTP\Shares;
+use SubstancePHP\HTTP\Share;
+use SubstancePHP\HTTP\ShareInterface;
 
 /**
  * This middleware assumes there is a {@see Route} stored on the request it is processing. It uses the
@@ -37,7 +38,7 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
         private ContextFactoryInterface $contextFactory,
         private RendererFactoryInterface $rendererFactory,
         private ResponseFactoryInterface $responseFactory,
-        private Shares $shares,
+        private Share $share,
     ) {
     }
 
@@ -81,7 +82,7 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
                 path: $respond->getTemplate() ?? $route->normalizedPath,
                 contentType: $contentType,
                 data: $responseData,
-                shared: fn (): array => $this->shares->resolve($context, $request),
+                share: fn (): ShareInterface => $this->share->resolve($context),
             ));
             $response->getBody()->write($renderer->render());
         }

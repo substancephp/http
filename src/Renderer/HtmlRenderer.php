@@ -6,11 +6,13 @@ namespace SubstancePHP\HTTP\Renderer;
 
 use Laminas\Escaper\Escaper;
 use SubstancePHP\HTTP\Assets;
+use SubstancePHP\HTTP\EmptyShare;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingAssetException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingElementException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingLayoutException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingPartialException;
 use SubstancePHP\HTTP\RendererInterface;
+use SubstancePHP\HTTP\ShareInterface;
 
 class HtmlRenderer implements RendererInterface
 {
@@ -22,14 +24,15 @@ class HtmlRenderer implements RendererInterface
 
     /**
      * @param array<string, mixed> $data
-     * @param array<string, mixed> $shared
+     * @param ShareInterface $share the application's shared variables, whose public properties become
+     *   template variables
      */
     public function __construct(
         private string $templatePath,
         private array $data,
         private Escaper $escaper,
         private string $templateRoot,
-        private array $shared = [],
+        private ShareInterface $share = new EmptyShare(),
         private ?Assets $assets = null,
         private string $defaultLayout = 'layout',
     ) {
@@ -373,10 +376,10 @@ class HtmlRenderer implements RendererInterface
      */
     private function includeWith(string $path, array $data): void
     {
-        // Shared variables (the application's Templating::$shared) are the base layer, so they reach
-        // every template layer (view, layout, partial and element) while the include's own data wins on
-        // a name clash.
-        $data += $this->shared;
+        // The application's shared variables are the base layer, so they reach every template layer (view,
+        // layout, partial and element) while the include's own data wins on a name clash. The share's public
+        // properties are the variables; reading it from here leaves anything non-public out of the scope.
+        $data += \get_object_vars($this->share);
         self::assertValidDataKeys($data);
         // These properties are read only inside the closure below, synchronously and before any
         // template code runs, so a nested include may safely overwrite them; the closure scope

@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use SubstancePHP\HTTP\EmptyShare;
 use SubstancePHP\HTTP\Exception\RenderingException\UnsupportedContentTypeException;
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
 use SubstancePHP\HTTP\Renderer\JsonRenderer;
 use SubstancePHP\HTTP\RendererFactory;
+use SubstancePHP\HTTP\ShareInterface;
 use SubstancePHP\HTTP\Templating;
 use SubstancePHP\HTTP\RenderInput;
 use TestUtil\TestUtil;
@@ -45,16 +47,16 @@ class RendererFactoryTest extends TestCase
     {
         $factory = $this->makeInstance();
         $calls = 0;
-        $shared = function () use (&$calls): array {
+        $share = function () use (&$calls): ShareInterface {
             $calls++;
-            return ['appName' => 'My App'];
+            return new EmptyShare();
         };
 
         // Only an HTML renderer needs the shared variables, so a JSON response must not resolve them.
-        $factory->createRenderer(new RenderInput('dummy', 'application/json', [], $shared));
+        $factory->createRenderer(new RenderInput('dummy', 'application/json', [], $share));
         $this->assertSame(0, $calls);
 
-        $factory->createRenderer(new RenderInput('dummy', 'text/html; charset=utf-8', [], $shared));
+        $factory->createRenderer(new RenderInput('dummy', 'text/html; charset=utf-8', [], $share));
         $this->assertSame(1, $calls);
     }
 

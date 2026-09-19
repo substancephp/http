@@ -2,6 +2,14 @@
 
 ### Unreleased
 
+Major (breaking):
+* Shared template data is a single `ShareInterface` implementation whose public properties are the template
+  variables, instead of a list of `ShareInterface` services returning arrays. `ShareInterface` is now a
+  marker, `Templating::$share` takes that class name, and `HtmlRenderer` and `RenderInput` take the share
+  object rather than an array. `Shares` becomes `Share`, which resolves that one class and autowires it when
+  the application binds nothing, and `EmptyShare` is the default. See `docs/templating.md`.
+
+Minor:
 * `Respond::__invoke()` is generic, so the data an action passes through it keeps its type:
   `return $respond(200, $data);` analyses exactly as `return $data;` does. Templates' `@var` blocks are
   documented as the contract the rules read. See `docs/static-analysis.md`.

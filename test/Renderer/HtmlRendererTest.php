@@ -15,6 +15,7 @@ use SubstancePHP\HTTP\Exception\RenderingException\MissingElementException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingLayoutException;
 use SubstancePHP\HTTP\Exception\RenderingException\MissingPartialException;
 use SubstancePHP\HTTP\Renderer\HtmlRenderer;
+use SubstancePHP\HTTP\ShareInterface;
 use TestUtil\TestUtil;
 
 #[CoversClass(HtmlRenderer::class)]
@@ -525,7 +526,7 @@ class HtmlRendererTest extends TestCase
             data: [],
             escaper: new Escaper('utf-8'),
             templateRoot: TestUtil::getFixtureRoot() . '/template',
-            shared: ['appName' => 'My App', 'who' => 'World'],
+            share: self::copyShare('My App', 'World'),
         );
         $this->assertStringContainsString('<p>My App / World</p>', $renderer->render());
     }
@@ -538,7 +539,7 @@ class HtmlRendererTest extends TestCase
             data: ['appName' => 'From action'],
             escaper: new Escaper('utf-8'),
             templateRoot: TestUtil::getFixtureRoot() . '/template',
-            shared: ['appName' => 'Shared', 'who' => 'World'],
+            share: self::copyShare('Shared', 'World'),
         );
         $this->assertStringContainsString('<p>From action / World</p>', $renderer->render());
     }
@@ -576,5 +577,17 @@ class HtmlRendererTest extends TestCase
             escaper: new Escaper('utf-8'),
             templateRoot: TestUtil::getFixtureRoot() . '/template',
         );
+    }
+
+    /** A share contributing the given copy, standing in for an application's shared variables. */
+    private static function copyShare(string $appName, string $who): ShareInterface
+    {
+        return new class ($appName, $who) implements ShareInterface {
+            public function __construct(
+                public string $appName,
+                public string $who,
+            ) {
+            }
+        };
     }
 }

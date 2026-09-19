@@ -24,13 +24,13 @@ class RendererFactory implements RendererFactoryInterface
         if (\str_starts_with($input->contentType, 'text/html')) {
             // The shared template variables are resolved here, lazily: only an HTML renderer uses them, so
             // other content types (e.g. JSON) never trigger the factory.
-            $shared = ($input->shared instanceof \Closure) ? ($input->shared)() : $input->shared;
+            $share = ($input->share instanceof \Closure) ? ($input->share)() : $input->share;
             return new HtmlRenderer(
                 templatePath: "{$this->templating->root}/{$input->path}.html.php",
                 data: $input->data,
                 escaper: new Escaper($this->templating->encoding),
                 templateRoot: $this->templating->root,
-                shared: $shared,
+                share: $share,
                 assets: $this->templating->assets,
                 defaultLayout: $this->templating->defaultLayout,
             );
