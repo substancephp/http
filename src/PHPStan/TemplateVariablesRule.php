@@ -48,7 +48,10 @@ final class TemplateVariablesRule implements Rule
     /** @return list<IdentifierRuleError> */
     public function processNode(Node $node, Scope $scope): array
     {
-        $actions = $node->get(ActionDataCollector::class);
+        $actions = self::callbackReturns(
+            $node->get(ActionDataCollector::class),
+            $node->get(ClosureSpanCollector::class),
+        );
         $selections = $node->get(TemplateSelectionCollector::class);
         $declarations = $node->get(TemplateSetCollector::class);
         $shared = self::sharedVariables(
@@ -568,6 +571,60 @@ final class TemplateVariablesRule implements Rule
             }
         }
         return $paired;
+    }
+
+    /**
+     * Keeps only the returns belonging to the action callback, dropping those of helper closures declared
+     * inside it.
+     *
+     * The callback is the closure the action file returns at top level, and a nested closure is one whose span
+     * sits strictly inside it, which is how they are told apart: a collector cannot see which function it is
+     * in, and an anonymous function's scope reports no function name.
+     *
+     * @param array<string, list<array{line: int, variants: array<int, array<string, string>>|null, callback?: array{start: int, end: int}}>> $actions
+     * @param array<string, list<array{start: int, end: int}>> $closures
+     * @return array<string, list<array{line: int, variants: array<int, array<string, string>>|null}>>
+     */
+    private static function callbackReturns(array $actions, array $closures): array
+    {
+        $kept = [];
+        foreach ($actions as $file => $returns) {
+            $callback = null;
+            foreach ($returns as $return) {
+                if (isset($return['callback'])) {
+                    $callback = $return['callback'];
+                }
+            }
+            if ($callback === null) {
+                continue;
+            }
+
+            $nested = [];
+            foreach ($closures[$file] ?? [] as $closure) {
+                if (($closure['start'] > $callback['start']) && ($closure['end'] < $callback['end'])) {
+                    $nested[] = $closure;
+                }
+            }
+
+            foreach ($returns as $return) {
+                if (! self::inside($return['line'], $callback)) {
+                    continue;
+                }
+                foreach ($nested as $span) {
+                    if (self::inside($return['line'], $span)) {
+                        continue 2;
+                    }
+                }
+                $kept[$file][] = ['line' => $return['line'], 'variants' => $return['variants']];
+            }
+        }
+        return $kept;
+    }
+
+    /** @param array{start: int, end: int} $span */
+    private static function inside(int $line, array $span): bool
+    {
+        return ($line >= $span['start']) && ($line <= $span['end']);
     }
 
     /**

@@ -11,6 +11,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use SubstancePHP\HTTP\PHPStan\ActionDataCollector;
+use SubstancePHP\HTTP\PHPStan\ClosureSpanCollector;
 use SubstancePHP\HTTP\PHPStan\IncludeSiteCollector;
 use SubstancePHP\HTTP\PHPStan\ShareParameterCollector;
 use SubstancePHP\HTTP\PHPStan\SharePropertyCollector;
@@ -37,6 +38,7 @@ final class TemplateVariablesRuleTest extends RuleTestCase
         return [
             new TemplateVariablesCollector(),
             new ActionDataCollector(),
+            new ClosureSpanCollector(),
             new SharePropertyCollector(),
             new ShareParameterCollector(),
             new TemplateSelectionCollector(),
@@ -237,6 +239,18 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             [
                 self::DATA . '/actions/away.get.php',
                 self::DATA . '/templates/away.html.php',
+            ],
+            [],
+        );
+    }
+
+    #[Test]
+    public function ignoresReturnsFromNestedClosures(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/actions/listing.get.php',
+                self::DATA . '/templates/listing.html.php',
             ],
             [],
         );

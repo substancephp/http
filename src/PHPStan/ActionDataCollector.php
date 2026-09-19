@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SubstancePHP\HTTP\PHPStan;
 
 use PhpParser\Node;
+use PhpParser\Node\Expr\Closure;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
 use PHPStan\Type\VerbosityLevel;
@@ -17,7 +18,10 @@ use PHPStan\Type\VerbosityLevel;
  * them again before comparing. A return whose type has no statically known keys (an untyped `array`, `mixed`)
  * reports `null` variants, which the rule treats as unverifiable rather than as providing nothing.
  *
- * @implements Collector<Node\Stmt\Return_, array{line: int, variants: array<int, array<string, string>>|null}>
+ * The file-level return, which yields the callback rather than data, reports the callback's line span
+ * instead, along with no variants.
+ *
+ * @implements Collector<Node\Stmt\Return_, array{line: int, variants: array<int, array<string, string>>|null, callback?: array{start: int, end: int}}>
  */
 final class ActionDataCollector implements Collector
 {
@@ -26,12 +30,19 @@ final class ActionDataCollector implements Collector
         return Node\Stmt\Return_::class;
     }
 
-    /** @return array{line: int, variants: array<int, array<string, string>>|null}|null */
-    public function processNode(Node $node, Scope $scope): ?array
+    /** @return array{line: int, variants: array<int, array<string, string>>|null, callback?: array{start: int, end: int}} */
+    public function processNode(Node $node, Scope $scope): array
     {
-        // Action files return their callback at the top level; only returns inside it are response data.
+        // Action files return their callback at the top level, so this returns the callback's span rather than
+        // any data, which is how the rule tells its own returns from those of helper closures inside it.
         if (! $scope->isInAnonymousFunction()) {
-            return null;
+            return ($node->expr instanceof Closure)
+                ? [
+                    'line' => $node->getStartLine(),
+                    'variants' => [],
+                    'callback' => ['start' => $node->expr->getStartLine(), 'end' => $node->expr->getEndLine()],
+                ]
+                : ['line' => $node->getStartLine(), 'variants' => []];
         }
 
         // A bare `return`, or one returning null, is a bodyless response: that branch renders no template, so
