@@ -34,14 +34,15 @@ final class ActionDataCollector implements Collector
             return null;
         }
 
-        // A bare `return`, or one returning null (a bodyless response), provides no variables.
+        // A bare `return`, or one returning null, is a bodyless response: that branch renders no template, so
+        // it contributes no variant at all, neither satisfying nor violating the template's contract.
         if ($node->expr === null) {
-            return ['line' => $node->getStartLine(), 'variants' => [[]]];
+            return ['line' => $node->getStartLine(), 'variants' => []];
         }
 
         $type = $scope->getType($node->expr);
         if ($type->isNull()->yes()) {
-            return ['line' => $node->getStartLine(), 'variants' => [[]]];
+            return ['line' => $node->getStartLine(), 'variants' => []];
         }
 
         $variants = [];

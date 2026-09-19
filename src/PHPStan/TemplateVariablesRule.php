@@ -434,6 +434,11 @@ final class TemplateVariablesRule implements Rule
             }
         }
 
+        if ($variants === []) {
+            // Every return in this action is bodyless, so no template renders and there is nothing to check.
+            return $errors;
+        }
+
         if ($only) {
             foreach ($variants as $variant) {
                 foreach ($wanted as $name => $wantedDeclaration) {

@@ -217,4 +217,28 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             ]],
         );
     }
+
+    #[Test]
+    public function allowsABodylessReturnBesideOneThatProvidesTheData(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/actions/guest.get.php',
+                self::DATA . '/templates/guest.html.php',
+            ],
+            [],
+        );
+    }
+
+    #[Test]
+    public function allowsAnActionWhoseReturnsAreAllBodyless(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/actions/away.get.php',
+                self::DATA . '/templates/away.html.php',
+            ],
+            [],
+        );
+    }
 }
