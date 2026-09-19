@@ -18,7 +18,6 @@ parameters:
         # Fixtures that deliberately include a template which does not exist, or that meddle with the
         # layout of the template that included them, to exercise the missing-template exceptions and the
         # partial-isolation guard.
-        - testutil/Fixture/template/element-error-view.html.php
         - testutil/Fixture/template/missing-element-view.html.php
         - testutil/Fixture/template/missing-layout-view.html.php
         - testutil/Fixture/template/partials/layout-meddler.html.php

@@ -192,6 +192,16 @@ final class TemplateVariablesRule implements Rule
                     continue;
                 }
 
+                if (! $site['readable']) {
+                    $errors[] = self::error(
+                        'The data this include passes is not statically known, so the template it names cannot'
+                        . ' be checked. Pass an array literal.',
+                        $file,
+                        $site['line'],
+                    );
+                    continue;
+                }
+
                 $matches = self::matching($site['template'], $templates);
                 if ($matches === []) {
                     $errors[] = self::error(

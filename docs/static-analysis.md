@@ -112,6 +112,8 @@ These are reported rather than skipped, because skipping would leave the check q
 
 * a return whose data has no statically known keys, such as a bare `array` or `mixed`: return an array shape;
 * `setTemplate()` with anything but a literal or a constant;
+* data an include passes whose keys are not statically known, such as a variable typed
+  `array<string, string>`;
 * a template variable that nothing provides.
 
 Both the action tree and the template tree have to be in the paths PHPStan analyses.

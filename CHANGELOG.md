@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### Unreleased
+
+* Index the templates PHPStan gives no inline-HTML node, so that an include naming one resolves instead of
+  being reported as missing, and report data an include passes whose keys are not statically known rather
+  than claiming the template's variables were not passed.
+
 ### v0.12.0
 
 Major (breaking):

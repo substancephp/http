@@ -18,7 +18,10 @@ use PHPStan\Type\VerbosityLevel;
  * directory (`partials/`, `layouts/`, `elements/`). `fetch()` is a slot lookup rather than an include, so it
  * is not collected. Types travel as descriptions, since collected data crosses files as JSON.
  *
- * @implements Collector<MethodCall, array{line: int, template: string|null, provides: array<string, string>}>
+ * `readable` says whether the variables the call passes could be read at all: a computed array has no
+ * statically known keys, which the pairing rule reports rather than mistaking for a call that passes nothing.
+ *
+ * @implements Collector<MethodCall, array{line: int, template: string|null, readable: bool, provides: array<string, string>}>
  */
 final class IncludeSiteCollector implements Collector
 {
@@ -37,7 +40,7 @@ final class IncludeSiteCollector implements Collector
         return MethodCall::class;
     }
 
-    /** @return array{line: int, template: string|null, provides: array<string, string>}|null */
+    /** @return array{line: int, template: string|null, readable: bool, provides: array<string, string>}|null */
     public function processNode(Node $node, Scope $scope): ?array
     {
         if (! $node->name instanceof Identifier) {
@@ -53,9 +56,12 @@ final class IncludeSiteCollector implements Collector
         $names = ($name === null) ? [] : $scope->getType($name->value)->getConstantStrings();
 
         $provides = [];
+        $readable = true;
         $data = $arguments[$include['data']] ?? null;
         if ($data !== null) {
-            foreach ($scope->getType($data->value)->getConstantArrays() as $shape) {
+            $shapes = $scope->getType($data->value)->getConstantArrays();
+            $readable = ($shapes !== []);
+            foreach ($shapes as $shape) {
                 $keyTypes = $shape->getKeyTypes();
                 $valueTypes = $shape->getValueTypes();
                 foreach ($keyTypes as $index => $keyType) {
@@ -70,6 +76,7 @@ final class IncludeSiteCollector implements Collector
         return [
             'line' => $node->getStartLine(),
             'template' => ($names === []) ? null : "{$include['directory']}/{$names[0]->getValue()}",
+            'readable' => $readable,
             'provides' => $provides,
         ];
     }

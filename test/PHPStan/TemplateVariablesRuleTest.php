@@ -201,4 +201,20 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             ]],
         );
     }
+
+    #[Test]
+    public function flagsDataAnIncludePassesThatCannotBeChecked(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/templates/rows.html.php',
+                self::DATA . '/partials/detail.html.php',
+            ],
+            [[
+                'The data this include passes is not statically known, so the template it names cannot be'
+                . ' checked. Pass an array literal.',
+                11,
+            ]],
+        );
+    }
 }
