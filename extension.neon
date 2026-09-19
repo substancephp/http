@@ -39,7 +39,11 @@ services:
         tags:
             - phpstan.collector
     -
-        class: SubstancePHP\HTTP\PHPStan\ShareCollector
+        class: SubstancePHP\HTTP\PHPStan\SharePropertyCollector
+        tags:
+            - phpstan.collector
+    -
+        class: SubstancePHP\HTTP\PHPStan\ShareParameterCollector
         tags:
             - phpstan.collector
     -

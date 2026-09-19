@@ -12,7 +12,8 @@ use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use SubstancePHP\HTTP\PHPStan\ActionDataCollector;
 use SubstancePHP\HTTP\PHPStan\IncludeSiteCollector;
-use SubstancePHP\HTTP\PHPStan\ShareCollector;
+use SubstancePHP\HTTP\PHPStan\ShareParameterCollector;
+use SubstancePHP\HTTP\PHPStan\SharePropertyCollector;
 use SubstancePHP\HTTP\PHPStan\TemplateSelectionCollector;
 use SubstancePHP\HTTP\PHPStan\TemplateSetCollector;
 use SubstancePHP\HTTP\PHPStan\TemplateVariablesCollector;
@@ -36,7 +37,8 @@ final class TemplateVariablesRuleTest extends RuleTestCase
         return [
             new TemplateVariablesCollector(),
             new ActionDataCollector(),
-            new ShareCollector(),
+            new SharePropertyCollector(),
+            new ShareParameterCollector(),
             new TemplateSelectionCollector(),
             new TemplateSetCollector(),
             new IncludeSiteCollector(),
@@ -158,6 +160,25 @@ final class TemplateVariablesRuleTest extends RuleTestCase
                 \sprintf(
                     'No return of this action provides $items, $message together, which the template %s declares.',
                     self::DATA . '/templates/combined.html.php',
+                ),
+                8,
+            ]],
+        );
+    }
+
+    #[Test]
+    public function flagsAShareVariableOfTheWrongType(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/NullableShare.php',
+                self::DATA . '/templates/share-type.html.php',
+            ],
+            [[
+                \sprintf(
+                    'The template %s declares $appName as string, but the application share publishes'
+                    . ' string|null.',
+                    self::DATA . '/templates/share-type.html.php',
                 ),
                 8,
             ]],

@@ -95,6 +95,9 @@ The declared types are checked as well as the names, so a template declaring `in
 a return providing `'twelve'`. The check only speaks when it is sure: a value it can prove nothing about, such
 as one typed `mixed`, is left alone.
 
+Variables a template takes from the application's share are checked the same way, so a template declaring
+`@var string $appName` is not satisfied by a share publishing it as `?string $appName`.
+
 The renderer helpers that include another template are checked in the same way. `partial()`, `layout()` and
 `beginElement()` each resolve their name inside their own directory, and what a call passes has to satisfy
 what the template it names declares. `fetch()` reads a slot rather than including a template, so it is not

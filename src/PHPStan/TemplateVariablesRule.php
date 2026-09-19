@@ -51,7 +51,10 @@ final class TemplateVariablesRule implements Rule
         $actions = $node->get(ActionDataCollector::class);
         $selections = $node->get(TemplateSelectionCollector::class);
         $declarations = $node->get(TemplateSetCollector::class);
-        $shared = self::sharedVariables($node->get(ShareCollector::class));
+        $shared = self::sharedVariables(
+            $node->get(SharePropertyCollector::class),
+            $node->get(ShareParameterCollector::class),
+        );
 
         $templates = [];
         foreach ($node->get(TemplateVariablesCollector::class) as $templateFile => $entries) {
@@ -67,6 +70,9 @@ final class TemplateVariablesRule implements Rule
 
         $errors = [];
         foreach ($templates as $route => $template) {
+            foreach ($this->sharedTypeMismatches($template, $shared) as $error) {
+                $errors[] = $error;
+            }
             $wanted = self::wanted($template['declared'], $shared);
             if ($wanted === []) {
                 continue;
@@ -159,7 +165,7 @@ final class TemplateVariablesRule implements Rule
      * variables the application's share provides.
      *
      * @param array<string, array{file: string, declared: array<string, array{type: string, line: int}>}> $templates
-     * @param string[] $shared
+     * @param array<string, string[]> $shared
      * @param list<IdentifierRuleError> $errors
      */
     private function checkIncludeSites(
@@ -248,13 +254,50 @@ final class TemplateVariablesRule implements Rule
     }
 
     /**
+     * The variables a template takes from the application's share but declares with a type the share does not
+     * publish. Where several shares publish the same variable, any one of them satisfying the declaration is
+     * enough, so a test double cannot produce a false positive.
+     *
+     * @param array{file: string, declared: array<string, array{type: string, line: int}>} $template
+     * @param array<string, string[]> $shared
+     * @return list<IdentifierRuleError>
+     */
+    private function sharedTypeMismatches(array $template, array $shared): array
+    {
+        $errors = [];
+        foreach ($template['declared'] as $name => $declaration) {
+            $published = $shared[$name] ?? [];
+            if ($published === []) {
+                continue;
+            }
+            foreach ($published as $type) {
+                if ($this->accepts($declaration['type'], $type) === true) {
+                    continue 2;
+                }
+            }
+            $errors[] = self::error(
+                \sprintf(
+                    'The template %s declares $%s as %s, but the application share publishes %s.',
+                    $template['file'],
+                    $name,
+                    $declaration['type'],
+                    \implode(' or ', $published),
+                ),
+                $template['file'],
+                $declaration['line'],
+            );
+        }
+        return $errors;
+    }
+
+    /**
      * @param array<string, array{type: string, line: int}> $declared
-     * @param string[] $shared
+     * @param array<string, string[]> $shared
      * @return array<string, array{type: string, line: int}>
      */
     private static function wanted(array $declared, array $shared): array
     {
-        return \array_diff_key($declared, \array_flip($shared));
+        return \array_diff_key($declared, $shared);
     }
 
     /**
@@ -413,22 +456,29 @@ final class TemplateVariablesRule implements Rule
     }
 
     /**
-     * @param array<string, list<array{class: string, variables: string[]}>> $shares
-     * @return string[]
+     * Every variable the application's shares publish, with the types they publish it as.
+     *
+     * Several implementations are unioned, so a variable any of them publishes counts as provided.
+     *
+     * @param array<string, list<list<array{variable: string, type: string}>>> ...$sources
+     * @return array<string, string[]>
      */
-    private static function sharedVariables(array $shares): array
+    private static function sharedVariables(array ...$sources): array
     {
         $shared = [];
-        foreach ($shares as $entries) {
-            foreach ($entries as $entry) {
-                // The framework's own default is not an application's share.
-                if (\str_starts_with($entry['class'], 'SubstancePHP\\HTTP\\')) {
-                    continue;
+        foreach ($sources as $files) {
+            foreach ($files as $nodes) {
+                foreach ($nodes as $variables) {
+                    foreach ($variables as $variable) {
+                        $shared[$variable['variable']][] = $variable['type'];
+                    }
                 }
-                $shared = [...$shared, ...$entry['variables']];
             }
         }
-        return \array_values(\array_unique($shared));
+        foreach ($shared as $variable => $types) {
+            $shared[$variable] = \array_values(\array_unique($types));
+        }
+        return $shared;
     }
 
     /**
