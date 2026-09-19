@@ -78,8 +78,17 @@ readonly class RouteActorMiddleware implements MiddlewareInterface
             $response = $response->withHeader($name, $values);
         }
         if (! $bodyless) {
+            $template = $respond->getTemplate() ?? $route->defaultTemplate();
+            if (! $route->allowsTemplate($template)) {
+                throw new \LogicException(\sprintf(
+                    'The action for %s selects the template %s, which it does not declare; declare it with'
+                    . ' #[AltTemplates].',
+                    $route->normalizedPath,
+                    $template,
+                ));
+            }
             $renderer = $this->rendererFactory->createRenderer(new RenderInput(
-                path: $respond->getTemplate() ?? $route->normalizedPath,
+                path: $template,
                 contentType: $contentType,
                 data: $responseData,
                 share: fn (): ShareInterface => $this->share->resolve($context),

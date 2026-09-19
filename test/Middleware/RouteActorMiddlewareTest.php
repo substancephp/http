@@ -413,4 +413,42 @@ class RouteActorMiddlewareTest extends TestCase
         $this->assertFalse($response->hasHeader('Content-Type'));
         $this->assertEmpty((string) $response->getBody());
     }
+
+    #[Test]
+    public function processRendersTheDeclaredDefaultTemplate(): void
+    {
+        $requestFactory = new ServerRequestFactory();
+        $requestHandler = $this->createMock(RequestHandler::class);
+
+        $route = Route::from(TestUtil::getActionFixtureRoot(), 'GET', '/declared-default');
+        \assert($route instanceof Route);
+        $this->assertSame('declared-default', $route->defaultTemplate());
+        $this->assertTrue($route->allowsTemplate('declared-default'));
+        $this->assertFalse($route->allowsTemplate('other'));
+
+        $request = $requestFactory
+            ->createServerRequest('GET', '/declared-default')
+            ->withAttribute(Route::class, $route);
+
+        $context = Container::from([
+            Respond::class => function () {
+                $respond = new Respond(200);
+                $respond->setHeader('Content-Type', 'text/html');
+                return $respond;
+            },
+        ]);
+        $contextFactory = $this->createStub(ContextFactoryInterface::class);
+        $contextFactory->method('createContext')->willReturn($context);
+        $instance = new RouteActorMiddleware(
+            $this->createMock(ContainerInterface::class),
+            $contextFactory,
+            new RendererFactory(new Templating(TestUtil::getFixtureRoot() . '/template', 'utf-8')),
+            new ResponseFactory(),
+            new Share(EmptyShare::class),
+        );
+
+        $response = $instance->process($request, $requestHandler);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString('<p>declared default</p>', (string) $response->getBody());
+    }
 }

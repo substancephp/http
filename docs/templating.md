@@ -29,6 +29,21 @@ Your action's return value becomes the template's data, and the template file
 for a route is `{templateRoot}/{path}.html.php`. An action can render a different
 template with `$respond->setTemplate('other/path')` (see [responses.md](responses.md)).
 
+An action can also declare the templates it renders, on the callback its file returns. `#[DefaultTemplate]`
+replaces the route's own template as the default, and `#[AltTemplates]` lists templates that
+`setTemplate()` may select:
+
+```php
+return #[DefaultTemplate('pages/dashboard')]
+    #[AltTemplates(['pages/dashboard-empty'])]
+    static function (Respond $respond): array { /* ... */ };
+```
+
+Declaring either closes the set. The declared default is what renders when the action selects nothing, and a
+`setTemplate()` naming a template the action does not declare throws a `LogicException`. An action that
+declares nothing keeps the route's own template as its default and may select anything, so actions written
+before these attributes existed are unaffected.
+
 ```php
 // actions/stores.get.php
 return ['stores' => [['name' => 'Corner Shop'], ['name' => 'Central']]];

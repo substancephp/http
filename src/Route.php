@@ -55,6 +55,12 @@ class Route
     /** @var array<string, string> captured path parameters, keyed by the segment name declared in `[name]` */
     private readonly array $params;
 
+    /** The template declared by {@see DefaultTemplate}, or null when this route's own path is the default */
+    private readonly ?string $declaredDefault;
+
+    /** @var string[] the templates declared by {@see AltTemplates}, if any */
+    private readonly array $declaredAlternatives;
+
     /**
      * @var array{
      *     skip: array<string, true>,
@@ -64,12 +70,22 @@ class Route
      */
     private ?array $middlewareDeclarations;
 
-    /** @param array<string, string> $params the captured path parameters */
-    private function __construct(callable $callback, string $normalizedPath, array $params)
-    {
+    /**
+     * @param array<string, string> $params the captured path parameters
+     * @param string[] $declaredAlternatives
+     */
+    private function __construct(
+        callable $callback,
+        string $normalizedPath,
+        array $params,
+        ?string $declaredDefault = null,
+        array $declaredAlternatives = [],
+    ) {
         $this->callback = $callback(...);
         $this->normalizedPath = $normalizedPath;
         $this->params = $params;
+        $this->declaredDefault = $declaredDefault;
+        $this->declaredAlternatives = \array_values(\array_unique($declaredAlternatives));
         $this->middlewareDeclarations = null;
     }
 
@@ -159,7 +175,75 @@ class Route
         if (! \is_callable($content)) {
             return null;
         }
-        return new self($content, $normalizedPath, $params);
+        $declaration = self::templateDeclaration($content);
+
+        return new self(
+            $content,
+            $normalizedPath,
+            $params,
+            $declaration['default'],
+            $declaration['alternatives'],
+        );
+    }
+
+    /** The template rendered when the action does not select one: the declared default, else this route. */
+    public function defaultTemplate(): string
+    {
+        return $this->declaredDefault ?? $this->normalizedPath;
+    }
+
+    /**
+     * Whether the action may render the given template.
+     *
+     * An action that declares nothing is not restricted, so anything may be selected and this route's own
+     * path stays the default. Declaring {@see DefaultTemplate} or {@see AltTemplates} closes the set.
+     */
+    public function allowsTemplate(string $template): bool
+    {
+        if ($this->declaredDefault === null && $this->declaredAlternatives === []) {
+            return true;
+        }
+        return \in_array($template, $this->declaredTemplates(), true);
+    }
+
+    /** @return string[] every template the action declares, the default included */
+    private function declaredTemplates(): array
+    {
+        return ($this->declaredDefault === null)
+            ? $this->declaredAlternatives
+            : [$this->declaredDefault, ...$this->declaredAlternatives];
+    }
+
+    /**
+     * Reads {@see DefaultTemplate} and {@see AltTemplates} off the callback the action file returns.
+     *
+     * Only a closure can carry them; a file returning an invokable object declares nothing.
+     *
+     * @return array{default: ?string, alternatives: string[]}
+     */
+    private static function templateDeclaration(callable $content): array
+    {
+        if (! $content instanceof \Closure) {
+            return ['default' => null, 'alternatives' => []];
+        }
+
+        $default = null;
+        $alternatives = [];
+        foreach ((new \ReflectionFunction($content))->getAttributes() as $attribute) {
+            if ($attribute->getName() === DefaultTemplate::class) {
+                $argument = $attribute->getArguments()[0] ?? null;
+                $default = \is_string($argument) ? $argument : $default;
+            }
+            if ($attribute->getName() === AltTemplates::class) {
+                foreach ($attribute->getArguments()[0] ?? [] as $template) {
+                    if (\is_string($template)) {
+                        $alternatives[] = $template;
+                    }
+                }
+            }
+        }
+
+        return ['default' => $default, 'alternatives' => $alternatives];
     }
 
     /**
