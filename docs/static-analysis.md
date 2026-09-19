@@ -98,6 +98,11 @@ as one typed `mixed`, is left alone.
 Variables a template takes from the application's share are checked the same way, so a template declaring
 `@var string $appName` is not satisfied by a share publishing it as `?string $appName`.
 
+An error page has no action behind it, so the rule checks it against the shape the framework renders error
+pages with, `$error` and `$statusCode`, plus whatever the share provides. A template counts as an error page
+when its route is `error` or `error/422`, the documented default root; an application that configures a
+different one is not checked.
+
 The renderer helpers that include another template are checked in the same way. `partial()`, `layout()` and
 `beginElement()` each resolve their name inside their own directory, and what a call passes has to satisfy
 what the template it names declares. `fetch()` reads a slot rather than including a template, so it is not

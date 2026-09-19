@@ -184,4 +184,21 @@ final class TemplateVariablesRuleTest extends RuleTestCase
             ]],
         );
     }
+
+    #[Test]
+    public function checksWhatAnErrorPageDeclares(): void
+    {
+        $this->analyse(
+            [
+                self::DATA . '/templates/error.html.php',
+            ],
+            [[
+                \sprintf(
+                    'The error page template %s declares $statusCode as string, but the framework provides int.',
+                    self::DATA . '/templates/error.html.php',
+                ),
+                8,
+            ]],
+        );
+    }
 }

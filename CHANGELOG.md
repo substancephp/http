@@ -12,7 +12,8 @@ Major (breaking):
 Minor:
 * The PHPStan extension also checks that the variables a template declares are provided by the action it
   renders for, or by the application's share, and that the types they are provided with satisfy what the
-  template declares. It checks what `partial()`, `layout()` and `beginElement()` pass as well.
+  template declares. It checks what `partial()`, `layout()` and `beginElement()` pass as well, and what an
+  error page declares.
   `#[DefaultTemplate]` and `#[AltTemplates]` declare templates an action renders off the conventional path,
   and the declared set is enforced: the declared default renders and a selection outside it throws.
   See `docs/static-analysis.md`.

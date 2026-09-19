@@ -73,6 +73,9 @@ final class TemplateVariablesRule implements Rule
             foreach ($this->sharedTypeMismatches($template, $shared) as $error) {
                 $errors[] = $error;
             }
+            foreach ($this->errorTemplateMismatches($template, $route, $shared) as $error) {
+                $errors[] = $error;
+            }
             $wanted = self::wanted($template['declared'], $shared);
             if ($wanted === []) {
                 continue;
@@ -286,6 +289,60 @@ final class TemplateVariablesRule implements Rule
                 $template['file'],
                 $declaration['line'],
             );
+        }
+        return $errors;
+    }
+
+    /**
+     * The variables an error page is rendered with, as the exception handler builds them. An error page has
+     * no action to take data from, so this is the whole of what it can declare, share aside.
+     */
+    private const ERROR_PAGE_DATA = ['error' => 'string', 'statusCode' => 'int'];
+
+    /**
+     * The variables an error page template declares that the framework does not render it with.
+     *
+     * Error templates are recognised by their route: the documented default root, `error`, with an optional
+     * status code, as `error/422`. An application that configures a different root is not checked.
+     *
+     * @param array{file: string, declared: array<string, array{type: string, line: int}>} $template
+     * @param array<string, string[]> $shared
+     * @return list<IdentifierRuleError>
+     */
+    private function errorTemplateMismatches(array $template, string $route, array $shared): array
+    {
+        if (\preg_match('#/error(/\d+)?$#', $route) !== 1) {
+            return [];
+        }
+
+        $errors = [];
+        foreach (self::wanted($template['declared'], $shared) as $name => $declaration) {
+            $provided = self::ERROR_PAGE_DATA[$name] ?? null;
+            if ($provided === null) {
+                $errors[] = self::error(
+                    \sprintf(
+                        'The error page template %s declares $%s, which the framework does not provide it.',
+                        $template['file'],
+                        $name,
+                    ),
+                    $template['file'],
+                    $declaration['line'],
+                );
+                continue;
+            }
+            if ($this->accepts($declaration['type'], $provided) === false) {
+                $errors[] = self::error(
+                    \sprintf(
+                        'The error page template %s declares $%s as %s, but the framework provides %s.',
+                        $template['file'],
+                        $name,
+                        $declaration['type'],
+                        $provided,
+                    ),
+                    $template['file'],
+                    $declaration['line'],
+                );
+            }
         }
         return $errors;
     }
